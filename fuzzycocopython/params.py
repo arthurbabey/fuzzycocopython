@@ -1,5 +1,6 @@
 class Params:
     def __init__(self,
+                 seed,
                  nbRules=3,
                  nbMaxVarPerRule=3,
                  nbOutVars=1,
@@ -37,6 +38,7 @@ class Params:
                  overLearnW=0.0,
                  threshold=0.5,
                  threshActivated=True):
+        self.seed = seed
         self.nbRules = nbRules
         self.nbMaxVarPerRule = nbMaxVarPerRule
         self.nbOutVars = nbOutVars

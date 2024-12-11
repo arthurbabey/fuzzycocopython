@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>       // For automatic conversion of STL containers
+#include <pybind11/stl/filesystem.h>
 #include "dataframe.h"
 #include "file_utils.h"         // For static utility functions
 #include "fuzzy_coco_script_runner.h"
@@ -18,6 +19,13 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
         .def(py::init<const std::vector<std::vector<std::string>>&, bool>(), "Initialize from a 2D vector of strings with row names flag")
         .def("nbcols", &DataFrame::nbcols, "Get the number of columns")
         .def("nbrows", &DataFrame::nbrows, "Get the number of rows")
+        .def("to_list", [](const DataFrame &df) {
+            std::vector<std::vector<double>> data;
+            for (int row = 0; row < df.nbrows(); row++) {
+               data.push_back(df.fetchRow(row));
+            }
+            return data;
+            }, "Convert DataFrame to a list of lists")
         .def("subsetColumns", 
              py::overload_cast<int, int>(&DataFrame::subsetColumns, py::const_), 
              "Subset columns by range (col1 to col2)")
@@ -27,6 +35,7 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
         .def("subsetColumns", 
              py::overload_cast<const std::vector<std::string>&>(&DataFrame::subsetColumns, py::const_), 
              "Subset columns by names");
+             
 
     // Bind FileUtils (namespace functions as static bindings)
     m.def("mkdir_if_needed", &FileUtils::mkdir_if_needed, "Create directory if it doesn't exist");
@@ -52,4 +61,19 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
              "Initialize with a CocoScriptRunnerMethod instance")
         .def("evalScriptCode", &FuzzyCocoScriptRunner::evalScriptCode, 
              "Evaluate the fuzzy system script from a string");
+
+     // Bind NamedList 
+     py::class_<NamedList>(m, "NamedList")
+        .def_static("parse", [](const std::string &file_path) {
+            std::ifstream in(file_path);
+            if (!in.is_open()) throw std::runtime_error("File not found: " + file_path);
+            return NamedList::parse(in);
+        }, "Parse a NamedList from a file")
+        .def("get_list", &NamedList::get_list, "Get a sublist by name");
+
+     // FuzzySystem bindings
+     py::class_<FuzzySystem>(m, "FuzzySystem")
+        .def_static("load", &FuzzySystem::load, "Load a FuzzySystem from a NamedList")
+        .def("smartPredict", &FuzzySystem::smartPredict, "Perform a smart prediction");
+        
 }

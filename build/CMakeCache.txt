@@ -92,7 +92,7 @@ CMAKE_FIND_ROOT_PATH_MODE_PACKAGE:PATH=BOTH
 CMAKE_INSTALL_NAME_TOOL:FILEPATH=/usr/bin/install_name_tool
 
 //Install path prefix, prepended onto install directories.
-CMAKE_INSTALL_PREFIX:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/platlib
+CMAKE_INSTALL_PREFIX:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/platlib
 
 //Path to a program.
 CMAKE_LINKER:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/ld
@@ -140,7 +140,7 @@ CMAKE_OSX_DEPLOYMENT_TARGET:STRING=14.6
 // inside the indicated SDK.
 CMAKE_OSX_SYSROOT:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk
 
-CMAKE_PREFIX_PATH:PATH=/Users/arthurbabey/miniconda3/envs/fuzzypy-env/lib/python3.11/site-packages;/private/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/pip-build-env-qy3d8y34/overlay/lib/python3.11/site-packages
+CMAKE_PREFIX_PATH:PATH=/Users/arthurbabey/miniconda3/envs/fuzzypy-env/lib/python3.11/site-packages;/private/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/pip-build-env-dac7o1m3/overlay/lib/python3.11/site-packages
 
 //Value Computed by CMake
 CMAKE_PROJECT_DESCRIPTION:STATIC=
@@ -259,15 +259,15 @@ SKBUILD:STRING=2
 
 SKBUILD_CORE_VERSION:STRING=0.10.7
 
-SKBUILD_DATA_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/data
+SKBUILD_DATA_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/data
 
-SKBUILD_HEADERS_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/headers
+SKBUILD_HEADERS_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/headers
 
-SKBUILD_METADATA_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/metadata
+SKBUILD_METADATA_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/metadata
 
-SKBUILD_NULL_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/null
+SKBUILD_NULL_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/null
 
-SKBUILD_PLATLIB_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/platlib
+SKBUILD_PLATLIB_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/platlib
 
 SKBUILD_PROJECT_NAME:STRING=fuzzycocopython
 
@@ -277,7 +277,7 @@ SKBUILD_PROJECT_VERSION_FULL:STRING=0.0.1
 
 SKBUILD_SABI_COMPONENT:STRING=
 
-SKBUILD_SCRIPTS_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpwv3ppit1/wheel/scripts
+SKBUILD_SCRIPTS_DIR:PATH=/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/tmpvfgj03dv/wheel/scripts
 
 SKBUILD_SOABI:STRING=cpython-311-darwin
 
