@@ -26,7 +26,7 @@ public:
 
     // bool isOutput(void) const { return _output; }
     // //  Define this variable as an output variable.
-    // void setOutput(bool output) { _output = output; } 
+    // void setOutput(bool output) { _output = output; }
 
     const vector<FuzzySet>& getSets() const { return _sets; }
     void setSets(const vector<FuzzySet>& sets) { _sets = sets; }
@@ -34,11 +34,11 @@ public:
     // TODO: change that to a FuzzySet& whenever possible
     FuzzySet* getSet(int idx) {
       assert(idx >= 0 && idx < getSetsCount());
-      return &_sets[idx]; 
+      return &_sets[idx];
     }
-    const FuzzySet* getSet(int idx) const { 
+    const FuzzySet* getSet(int idx) const {
       assert(idx >= 0 && idx < getSetsCount());
-      return &_sets[idx]; 
+      return &_sets[idx];
     }
     // void addSet(FuzzySet& set) {  _sets.push_back(set); }
     int getSetsCount() const { return _sets.size(); }

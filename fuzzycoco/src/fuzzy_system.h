@@ -13,7 +13,7 @@ using namespace std;
 #include "matrix.h"
 
 // small utility
-template<typename T> void reset(vector<T>& v, T value) { 
+template<typename T> void reset(vector<T>& v, T value) {
     int nb = v.size();
     v.clear();
     v.resize(nb, value);
@@ -23,13 +23,13 @@ template void reset(vector<bool>&, bool);
 template void reset(vector<double>&, double);
 
 struct FuzzySystemEvaluationState {
-    FuzzySystemEvaluationState(int nb_in_vars, int nb_out_vars, int nb_output_sets) : 
+    FuzzySystemEvaluationState(int nb_in_vars, int nb_out_vars, int nb_output_sets) :
         output_sets_results(nb_out_vars, nb_output_sets),
         input_value_missing(nb_in_vars),
         input_values(nb_in_vars),
         output_vars_max_fire_levels(nb_out_vars)
     {}
-    
+
     void reset() {
         output_sets_results.reset();
         ::reset(input_value_missing, false);
@@ -58,11 +58,11 @@ struct FuzzySystemEvaluationState {
     vector<double> defuzz_thresholded_values;
 };
 
-class FuzzySystem 
+class FuzzySystem
 {
 public:
     FuzzySystem(
-        int nb_input_vars, int nb_input_sets, 
+        int nb_input_vars, int nb_input_sets,
         int nb_output_vars, int nb_output_sets);
 
     FuzzySystem(const vector<string>& input_var_names, const vector<string>& output_var_names,
@@ -74,7 +74,7 @@ public:
 
     // ========= MAIN ACCESSORS ====================
     bool ok() const {
-        return getNbRules() > 0 && 
+        return getNbRules() > 0 &&
             getDefaultRulesOutputSets().size() == getDB().getNbOutputVars();
     }
 
@@ -120,7 +120,7 @@ public:
     // for testing
     vector<double> computeRulesFireLevels(const vector<double>& input_values) const;
 
-    // 
+    //
     // compute the implications for the consequent conditionsrules from the rules fire/truth levels
     // N.B: the fire/truth levels are summed. You probably need to reset the results Matrix<double> before
     void computeRulesImplications(const vector<double>& rule_fire_levels, Matrix<double>& results) const;
@@ -128,10 +128,10 @@ public:
     // N.B: the fire/truth levels are added to the current values of thje output sets
     void addDefaultRulesImplications(const vector<int>& default_rules_set_idx,  const vector<double>& outvars_max_fire_levels, Matrix<double>& results) const;
 
- 
+
     void computeOutputVarsMaxFireLevels(const vector<double>& rules_fire_levels, vector<double>& outvars_max_fire_levels) const;
     void defuzzify(const Matrix<double>& results, vector<double>& defuzz_values) const;
-   
+
 
 
 protected: // misc
@@ -139,7 +139,7 @@ protected: // misc
 
 private:
     FuzzyVariablesDB _vars_db;
-    
+
     // variable to be set after the construction
     vector<ConditionIndexes> _input_rules_idx;
     vector<ConditionIndexes> _output_rules_idx;

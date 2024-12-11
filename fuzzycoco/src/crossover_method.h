@@ -23,4 +23,3 @@ private:
 
 
 #endif // CROSSOVER_METHOD_H
-

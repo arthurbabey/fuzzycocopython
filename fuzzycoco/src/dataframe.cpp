@@ -76,13 +76,13 @@ void DataFrame::assign(const vector<vector<string>>& rows, bool rownames) {
 void DataFrame::colnames(const vector<string>& names) {
   if (names.size() != nbcols())
       throw runtime_error("bad colnames size!");
-  _colnames = names; 
+  _colnames = names;
 }
 
 void DataFrame::rownames(const vector<string>& names) {
   if (names.size() != nbrows() && names.size() != 0)
       throw runtime_error("bad rownames size!");
-  _rownames = names; 
+  _rownames = names;
 }
 
 
@@ -178,7 +178,7 @@ ostream& operator<<(ostream& out, const DataFrame& df) {
     auto result = max_element(df.rownames().cbegin(), df.rownames().cend(), longest);
     rownamesw = result->length() + 1;
   }
-  
+
   string DELIM = "|";
   string MISSING = "NA";
   int delimw = DELIM.length();

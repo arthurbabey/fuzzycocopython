@@ -117,7 +117,7 @@ public:
     return double(tp) / denum;
   }
 
-  // some metrics 
+  // some metrics
 
 };
 

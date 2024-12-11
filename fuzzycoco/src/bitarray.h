@@ -10,7 +10,7 @@ using BitArray = std::vector<bool>;
 
 // decode a number encoded as bits (actually on bools)
 namespace BitArrayUtils {
-    
+
     int decode_number(BitArray::const_iterator bits, int nb_bits);
     void encode_number(int number, BitArray::iterator bits, int nb_bits);
     void randomize(BitArray& bits, RandomGenerator& rng);

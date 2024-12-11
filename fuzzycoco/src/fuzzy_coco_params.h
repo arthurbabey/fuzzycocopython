@@ -51,8 +51,8 @@ struct GlobalParams {
     // the number of cooperators to use to evaluate the fitness in the coevolution algorithm
     int nb_cooperators = 2;
 
-    bool has_missing() const { 
-        return is_na(nb_rules) || is_na(nb_max_var_per_rule) || is_na(max_generations) || is_na(max_fitness) || is_na(nb_cooperators); 
+    bool has_missing() const {
+        return is_na(nb_rules) || is_na(nb_max_var_per_rule) || is_na(max_generations) || is_na(max_fitness) || is_na(nb_cooperators);
     }
 
     bool operator!=(const GlobalParams& p) const { return ! (*this == p); }

@@ -5,7 +5,7 @@
   * @brief a poor man's data frame
   * @class DataFrame: assumes that the first column contains the rownames, i.e the subjects
   * and that all other columns are numerical. Also handle missing data
-  * 
+  *
   */
 
 #ifndef DATAFRAME_H
@@ -39,7 +39,7 @@ public:
 
   void reset(int nbrows = 0, int nbcols = 0);
 
-  // extract a dataframe from this one with only columns from col1 --> col2. All columns from col1 
+  // extract a dataframe from this one with only columns from col1 --> col2. All columns from col1
   DataFrame subsetColumns(int col1, int col2) const;
   // to col2 (included) are in the returned dataframe
 
@@ -59,12 +59,12 @@ public:
 
   const NumColumn& getColumn(int col) const { return _cols[col]; }
   const NumColumn& operator[](int col) const { return getColumn(col); }
-  
-  NumColumn fetchRow(int row) const; 
+
+  NumColumn fetchRow(int row) const;
 
   double at(int row, int col) const {
     check_indexes(row, col);
-    return _cols[col][row]; 
+    return _cols[col][row];
   }
   bool missing(int row, int col) const {
     check_indexes(row, col);
@@ -75,13 +75,13 @@ public:
   void fillRow(int row, const vector<double>& values);
   void fillCol(int col, const NumColumn& values);
 
-  void check_indexes(int row, int col) const { 
+  void check_indexes(int row, int col) const {
     assert(row >=0 && row < _nbrows && col >=0 && col < _nbcols);
   }
 
   bool operator!=(const DataFrame& df) const { return ! (*this == df); }
   bool operator==(const DataFrame& df) const {
-    return _cols == df._cols && 
+    return _cols == df._cols &&
     _rownames == df._rownames &&
     _colnames == df._colnames;
   }
@@ -99,4 +99,3 @@ private:
 
 
 #endif // DATAFRAME_H
- 

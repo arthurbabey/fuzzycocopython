@@ -3,7 +3,7 @@
 
 double FuzzySystemFitness::fitness(const FuzzySystemMetrics& metrics) {
   int nb_vars = max(1, metrics.nb_vars);
-  double fit = 
+  double fit =
     metrics.sensitivity
     + metrics.specificity
     + metrics.accuracy
@@ -18,7 +18,7 @@ double FuzzySystemFitness::fitness(const FuzzySystemMetrics& metrics) {
 }
 
 double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics) {
-  double num = 
+  double num =
     _weights.sensitivity * metrics.sensitivity
     + _weights.specificity * metrics.specificity
     + _weights.accuracy * + metrics.accuracy
@@ -29,7 +29,7 @@ double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics) {
     + _weights.mse * pow(2, -metrics.mse )
     + _weights.nb_vars * (1.0  / max(1, metrics.nb_vars));
 
-  double denum = 
+  double denum =
     _weights.sensitivity
     + _weights.specificity
     + _weights.accuracy

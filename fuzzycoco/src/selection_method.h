@@ -22,9 +22,9 @@ class RankBasedSelectionMethod : public SelectionMethod
 public:
     RankBasedSelectionMethod(RandomGenerator& rng) : _rng(rng) {}
     void selectEntities(int nb, const vector<double>& fitnesses, vector<int>& indexes) override;
-    
+
     // karl: N.B: this is a hidden parameter that controls how to sample for best fitnesses
-    static constexpr int NB_SPLIT = 10;  
+    static constexpr int NB_SPLIT = 10;
 
 private:
     RandomGenerator& _rng;

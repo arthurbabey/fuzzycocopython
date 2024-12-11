@@ -48,9 +48,9 @@ FuzzySystem FuzzySystem::load(const NamedList& desc) {
         input_cond_lst.push_back(move(cis_in));
         output_cond_lst.push_back(move(cis_out));
     }
-    
+
     fs.setRulesConditions(input_cond_lst, output_cond_lst);
-  
+
     // default rules
     const auto& defrules = desc.get_list("default_rules");
     vector<int> default_rules;
@@ -63,8 +63,8 @@ FuzzySystem FuzzySystem::load(const NamedList& desc) {
     return fs;
 }
 
-FuzzySystem::FuzzySystem(const FuzzyVariablesDB& db) 
-    : _vars_db(db), _state(db.getNbInputVars(), db.getNbOutputVars(), db.getNbOutputSets()) 
+FuzzySystem::FuzzySystem(const FuzzyVariablesDB& db)
+    : _vars_db(db), _state(db.getNbInputVars(), db.getNbOutputVars(), db.getNbOutputSets())
 {
     _default_rules_out_sets.resize(_vars_db.getNbOutputVars(), 0);
 }
@@ -72,17 +72,17 @@ FuzzySystem::FuzzySystem(const FuzzyVariablesDB& db)
 
 
 FuzzySystem::FuzzySystem(
-        int nb_input_vars, int nb_input_sets, 
-        int nb_output_vars, int nb_output_sets) 
+        int nb_input_vars, int nb_input_sets,
+        int nb_output_vars, int nb_output_sets)
     : FuzzySystem(
-        build_default_var_names(nb_input_vars, "in"), 
+        build_default_var_names(nb_input_vars, "in"),
         build_default_var_names(nb_output_vars, "out"),
         nb_input_sets, nb_output_sets) {}
 
-FuzzySystem::FuzzySystem(const vector<string>& input_var_names, const vector<string>& output_var_names, 
+FuzzySystem::FuzzySystem(const vector<string>& input_var_names, const vector<string>& output_var_names,
 int nb_input_sets, int nb_output_sets)
-    : 
-    _vars_db(input_var_names, nb_input_sets, output_var_names, nb_output_sets),                                                      
+    :
+    _vars_db(input_var_names, nb_input_sets, output_var_names, nb_output_sets),
     _state(input_var_names.size(), output_var_names.size(), nb_output_sets)
 {
 
@@ -222,7 +222,7 @@ NamedList FuzzySystem::describe() const{
         default_rules.add("rule" + to_string(var_idx + 1), defrule);
     }
     desc.add("default_rules", default_rules);
-    
+
     return desc;
 }
 
@@ -267,7 +267,7 @@ void FuzzySystem::printDescription(ostream& out, const NamedList& desc)
     auto& defrules = desc.get_list("default_rules");
     out << "## default rules:" << endl;
     for (auto& defrule : defrules) {
-        out << TAB << "ELSE " << defrule->get_string("var_name") 
+        out << TAB << "ELSE " << defrule->get_string("var_name")
         << " SHOULD BE " << defrule->get_string("set_pretty") << endl;
     }
 }
@@ -299,7 +299,7 @@ void FuzzySystem::computeRulesImplications(const vector<double>& rule_fire_level
             const auto ci = getOutputRulesConditions()[rule_idx][i];
             results[ci.var_idx][ci.set_idx] += fire_level;
         }
-            
+
     }
 }
 
@@ -357,7 +357,7 @@ void FuzzySystem::computeOutputVarsMaxFireLevels(const vector<double>& rules_fir
     const int nb_out_vars = getDB().getNbOutputVars();
     assert(getOutputRulesConditions().size() > 0);
     assert(rules_fire_levels.size() == nb_rules);
-    
+
     outvars_max_fire_levels.resize(0);
     outvars_max_fire_levels.resize(nb_out_vars, MISSING_DATA_DOUBLE);
 
@@ -376,7 +376,7 @@ void FuzzySystem::defuzzify(const Matrix<double>& results, vector<double>& defuz
     const int nb_out_vars = getDB().getNbOutputVars();
     const int nb_sets = getDB().getNbOutputSets();
     assert(results.size() == nb_out_vars && results[0].size() == getDB().getNbOutputSets());
-    
+
     vector<double> set_evals(nb_sets, 0);
     defuzz_values.clear();
 
@@ -415,7 +415,7 @@ DataFrame FuzzySystem::predict(const DataFrame& input)
     const int nb_out_vars = getDB().getNbOutputVars();
     DataFrame res(nb_samples, nb_out_vars);
     vector<double> defuzzed(res.nbcols());
-    
+
     vector<string> output_names;
     output_names.reserve(nb_out_vars);
     for (int i = 0; i < nb_out_vars; i++)
@@ -463,9 +463,8 @@ void FuzzySystem::predictSample(int sample_idx, const DataFrame& dfin, vector<do
     //     auto& v = getState().defuzz_thresholded_values;
     //     v.clear();
     //     const int nb_out_vars = getDB().getNbOutputVars();
-    //     for (int var_idx = 0; var_idx < nb_out_vars; var_idx++) 
+    //     for (int var_idx = 0; var_idx < nb_out_vars; var_idx++)
     //         v.push_back(threshold_defuzzed_value(var_idx, getState().defuzz_values[var_idx]));
-    
+
     // }
 }
-

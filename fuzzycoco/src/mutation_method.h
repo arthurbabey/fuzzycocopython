@@ -18,7 +18,7 @@ class TogglingMutationMethod : public MutationMethod
 public:
     // mutFlipInd: the probability that a genome is a target for a mutation
     // mut_flip_genome: the probability that a bit of a genome is mutated
-    TogglingMutationMethod(RandomGenerator& rng, double mutFlipInd, double mut_flip_genome) 
+    TogglingMutationMethod(RandomGenerator& rng, double mutFlipInd, double mut_flip_genome)
         : _rng(rng), _mut_flip_genome(mut_flip_genome), _mutFlipInd(mutFlipInd) {}
 
     // N.B: if mutationPerBitProbability == 0 --> flip a single random position

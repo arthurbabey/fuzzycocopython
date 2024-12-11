@@ -14,8 +14,8 @@ EvolutionEngine::EvolutionEngine(const EvolutionParams& params, RandomGenerator&
         _individuals_selection_method(rng)
 {}
 
-pair<Generation, vector<double>> EvolutionEngine::evolve(const Genomes& genomes, EvolutionFitnessMethod& fitness_method, 
-    int nb_generations, double maxFit) 
+pair<Generation, vector<double>> EvolutionEngine::evolve(const Genomes& genomes, EvolutionFitnessMethod& fitness_method,
+    int nb_generations, double maxFit)
 {
 
 
@@ -28,7 +28,7 @@ pair<Generation, vector<double>> EvolutionEngine::evolve(const Genomes& genomes,
     for (int i = 0; i < nb_generations; i++) {
         const int nb = generation.individuals.size();
         // genfit = computeFitness(generation, fitness_method);
-  
+
         generation = nextGeneration(generation, fitness_method);
         generation_fitnesses.push_back(generation.fitness);
         if (generation.fitness >= maxFit) break; // early return if we reach the max fitness
@@ -51,7 +51,7 @@ void EvolutionEngine::updateGeneration(Generation& generation, EvolutionFitnessM
 
 // performs selection and reproduction
 Generation EvolutionEngine::nextGeneration(const Generation& generation, EvolutionFitnessMethod& fitness_method)
-{   
+{
     const auto& genomes = generation.individuals;
     const int nb = genomes.size();
     const int nb_elite = _params.elite_size;
@@ -79,7 +79,7 @@ Generation EvolutionEngine::nextGeneration(const Generation& generation, Evoluti
     updateGeneration(newgen, fitness_method);
     return newgen;
 }
- 
+
 Genomes EvolutionEngine::selectElite(const Genomes& genomes)
 {
     const int nb_elite = _params.elite_size;
@@ -104,7 +104,7 @@ Genomes EvolutionEngine::selectElite(const Genomes& genomes, const vector<double
 
 Genomes EvolutionEngine::selectEvolvers(int nb, const Genomes& genomes, const vector<double>& fitnesses)
 {
-    vector<int> indexes; // TODO: put in instance state 
+    vector<int> indexes; // TODO: put in instance state
     indexes.reserve(nb);
     indexes.clear();
     _individuals_selection_method.selectEntities(nb, fitnesses, indexes);
@@ -197,7 +197,7 @@ Genomes EvolutionEngine::selectBest(const Generation& generation) {
 //     if(!evaluatePopulation(_population, 0))
 //         return;
 
-//     // loop over all possible generations 
+//     // loop over all possible generations
 //     _current_generation = 0;
 //     for(quint32 i = 1; i <= generationCount; i++)
 //     {
@@ -205,7 +205,7 @@ Genomes EvolutionEngine::selectBest(const Generation& generation) {
 //             return false;
 //         }
 //     }
-    
+
 
 //     return evaluatePopulation(_population, 0);
 // }
@@ -292,4 +292,3 @@ Genomes EvolutionEngine::selectBest(const Generation& generation) {
 //         }
 //     }
 // }
-

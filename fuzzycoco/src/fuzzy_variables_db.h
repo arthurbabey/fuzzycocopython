@@ -5,7 +5,7 @@
   * @date   09.2024
   * @brief a Database of Input and Output Variables mean to be shared across Fuzzy Rules
   * @class FuzzyVariablesDB
-  * 
+  *
 */
 #ifndef FUZZY_VARIABLES_DB_H
 #define FUZZY_VARIABLES_DB_H
@@ -19,7 +19,7 @@ class FuzzyVariablesDB
 {
 public:
     FuzzyVariablesDB() {}
-    FuzzyVariablesDB(const vector<string>& input_names, int nb_in_sets, 
+    FuzzyVariablesDB(const vector<string>& input_names, int nb_in_sets,
       const vector<string>& output_names, int nb_out_sets);
     FuzzyVariablesDB(const FuzzyVariablesDB& db) : _input_vars(db._input_vars), _output_vars(db._output_vars) {}
     FuzzyVariablesDB(FuzzyVariablesDB&& db) : _input_vars(move(db._input_vars)), _output_vars(move(db._output_vars)) {}
@@ -31,7 +31,7 @@ public:
 
   int getNbOutputVars() const { return _output_vars.size(); }
   int getNbOutputSets() const { return _output_vars[0].getSetsCount(); }
-  
+
   // accessors: N.B: bounds checking
   FuzzyInputVariable& getInputVariable(int idx) { return _input_vars.at(idx); }
   const FuzzyInputVariable& getInputVariable(int idx) const { return _input_vars.at(idx); }
@@ -55,7 +55,7 @@ public:
   friend ostream& operator<<(ostream& out, const FuzzyVariablesDB& db);
 
 protected:
- template<class T> 
+ template<class T>
  static Matrix<double> fill_matrix_with_vars(const vector<T>& vars);
 
 private:
@@ -64,7 +64,7 @@ private:
 };
 
 
-template<class T> 
+template<class T>
 Matrix<double> FuzzyVariablesDB::fill_matrix_with_vars(const vector<T>& vars) {
   const int nb_vars = vars.size();
   const int nb_sets = vars.front().getSetsCount();

@@ -1,12 +1,12 @@
 #include "fuzzy_variable.h"
 
-FuzzyVariable::FuzzyVariable(string name, const vector<string>& set_names) : _name(move(name)) { 
+FuzzyVariable::FuzzyVariable(string name, const vector<string>& set_names) : _name(move(name)) {
        _sets.reserve(set_names.size());
        for (const auto& name : set_names)
         _sets.push_back({name});
 }
 
-FuzzyVariable::FuzzyVariable(string name, int nbsets) 
+FuzzyVariable::FuzzyVariable(string name, int nbsets)
   : FuzzyVariable(name, build_default_set_names(nbsets, name)) {}
 
 vector<string> FuzzyVariable::build_default_set_names(int nbsets, const string& set_base_name)
@@ -56,22 +56,22 @@ void FuzzyVariable::printDescription(ostream& out, const NamedList& desc)  {
     FuzzySet::printDescription(out, sets[i]);
     out << ", ";
   }
-  out << ")"; 
+  out << ")";
 }
 
-ostream& operator<<(ostream& out, const FuzzyVariable& var) 
+ostream& operator<<(ostream& out, const FuzzyVariable& var)
 {
   var.printDescription(out, var.describe());
   return out;
 }
 
-ostream& operator<<(ostream& out, const FuzzyInputVariable& var) 
+ostream& operator<<(ostream& out, const FuzzyInputVariable& var)
 {
   out << "FuzzyInputVariable " << static_cast<const FuzzyVariable&>(var);
   return out;
 }
 
-ostream& operator<<(ostream& out, const FuzzyOutputVariable& var) 
+ostream& operator<<(ostream& out, const FuzzyOutputVariable& var)
 {
   out << "FuzzyOutputVariable " << static_cast<const FuzzyVariable&>(var);
   return out;

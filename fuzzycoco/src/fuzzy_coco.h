@@ -14,7 +14,7 @@ class FuzzycocoFitnessMethod : public CoopCoevolutionFitnessMethod {
 public:
     FuzzycocoFitnessMethod(FuzzySystem& fuzzy_system, FuzzySystemMetricsComputer& fsmc, FuzzySystemFitness& fit,
         const DataFrame& dfin, const DataFrame& dfout,
-        RulesCodec& rules_codec, DiscretizedFuzzySystemSetPositionsCodec& vars_codec, 
+        RulesCodec& rules_codec, DiscretizedFuzzySystemSetPositionsCodec& vars_codec,
         const vector<double>& thresholds);
 
     double fitnessImpl(const Genome& rules_genome, const Genome& vars_genome) override;
@@ -47,14 +47,14 @@ class FuzzyCoco;
 class FuzzyCocoGeneration {
 public:
     FuzzyCocoGeneration(const EvolutionParams& params_rules, const Genomes& rules,
-         const EvolutionParams& params_mfs, const Genomes& mfs, 
+         const EvolutionParams& params_mfs, const Genomes& mfs,
          FuzzycocoFitnessMethod& fitter,
          RandomGenerator& rng);
 private:
     CoevolutionEngine& _coev_engine;
 };
 
-class FuzzyCoco 
+class FuzzyCoco
 {
 public:
     FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout,
@@ -79,7 +79,7 @@ public:
 
     // accessors
     FuzzycocoFitnessMethod& getFitnessMethod() { return *_fitter_ptr; }
-    
+
     RulesCodec& getRulesCodec() { return _rules_codec; }
     const RulesCodec& getRulesCodec() const { return _rules_codec; }
     DiscretizedFuzzySystemSetPositionsCodec& getMFsCodec() { return *_vars_codec_ptr; }

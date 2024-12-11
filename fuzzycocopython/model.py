@@ -1,18 +1,35 @@
-import subprocess
 import os
-import pandas as pd
+import subprocess
+
 import numpy as np
+import pandas as pd
+from fuzzycoco_core import (
+    CocoScriptRunnerMethod,
+    DataFrame,
+    FuzzyCocoScriptRunner,
+    FuzzySystem,
+    NamedList,
+    slurp,
+)
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from fuzzycoco_core import DataFrame, CocoScriptRunnerMethod, FuzzyCocoScriptRunner, slurp, NamedList, FuzzySystem
+
 from .params import Params
+
 
 class FuzzyModel(BaseEstimator, ClassifierMixin):
     def __init__(self, params: Params):
         self.params = params
         self.is_fitted = False
 
-    def fit(self, X, y, output_filename: str = "fuzzysystem.ffs", script_file: str = "", verbose: bool = False):
+    def fit(
+        self,
+        X,
+        y,
+        output_filename: str = "fuzzySystem.ffs",
+        script_file: str = "",
+        verbose: bool = False,
+    ):
 
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
@@ -38,7 +55,8 @@ class FuzzyModel(BaseEstimator, ClassifierMixin):
         runner = CocoScriptRunnerMethod(cdf, self.params.seed, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
         # work around to suppress output from FuzyCocoScriptRunner::run
-        if verbose:
+        # not working yet as fuzzySystem is not save to a file
+        if True:
             scripter.evalScriptCode(script)
         else:
             self._run_in_subprocess(scripter.evalScriptCode, script)

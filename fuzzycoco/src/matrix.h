@@ -4,7 +4,7 @@
   * @date   09.2024
   * @brief a poor man's numeric Matrix<double>
   * @class Matrix<double>
-  * 
+  *
 */
 
 #ifndef MATRIX_H
@@ -31,7 +31,7 @@ public:
 
   void redim(int nbrows, int nbcols) {
     vector<vector<T>>::resize(nbrows);
-    for (auto& row : *this) row.resize(nbcols);  
+    for (auto& row : *this) row.resize(nbcols);
   }
 
   void reset() {
@@ -50,4 +50,3 @@ public:
 
 
 #endif // MATRIX_H
- 

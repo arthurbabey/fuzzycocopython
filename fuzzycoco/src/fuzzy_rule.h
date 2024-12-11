@@ -36,7 +36,7 @@ struct ConditionIndex {
     set_idx = p.set_idx;
   }
 };
-inline bool operator==(const ConditionIndex& a, const ConditionIndex& b) { 
+inline bool operator==(const ConditionIndex& a, const ConditionIndex& b) {
   return a.var_idx == b.var_idx && a.set_idx == b.set_idx;
 }
 
@@ -77,7 +77,7 @@ public:
     const ConditionIndexes& getOutputConditionIndexes() const { return _output_cond; }
 
     // ============== methods that actually compute ======================
-    
+
     // combine the fire levels of each input condition into the final rule fire level
     // double combineFireLevels(const vector<double>& fire_levels) const;
     // void evaluate(const vector<double>& input_values, vector<double>& fire_levels);
@@ -100,20 +100,20 @@ public:
     NamedList describe() const;
     static void printDescription(ostream& out, const NamedList& desc);
     friend ostream& operator<<(ostream& out, const FuzzyRule& rule);
-  
+
 public:
 
   static double evaluateInputConditionFireLevel(const FuzzyVariablesDB& db, const ConditionIndex& ci, double value);
   static double evaluateFireLevel(const FuzzyVariablesDB& db, const ConditionIndexes& cis, const vector<double>& input_vars_values);
   static double evaluateFireLevel(const FuzzyVariablesDB& db, const ConditionIndexes& cis, const DataFrame& df, const int row);
-  
+
   // combine the fire levels of each input condition into the final rule fire level
   static double combineFireLevels(const vector<double>& fire_levels);
 
   // could/should go elsewhere ?
   // filter out the "wrong" pairs, which indices are out of range (the pairs usually come from the genetic algorithm)
   static ConditionIndexes filterConditionIndexes(int nb_vars, int nb_sets, const ConditionIndexes& cis);
-  // fixed vars mean that all vars are used, in the same order in pairs as in vars (i.e. we ignore the var index) 
+  // fixed vars mean that all vars are used, in the same order in pairs as in vars (i.e. we ignore the var index)
   static ConditionIndexes filterConditionIndexesWhenFixedVars(int nb_sets, const ConditionIndexes& cis);
 
 private:

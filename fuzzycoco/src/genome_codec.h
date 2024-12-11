@@ -10,13 +10,13 @@ using namespace BitArrayUtils;
 class IntCodec {
 public:
     IntCodec(int nb_bits) : _nb_bits(nb_bits) {}
-    int decode(BitArray::const_iterator& bits) const { 
+    int decode(BitArray::const_iterator& bits) const {
         int decoded = decode_number(bits, _nb_bits);
         bits += _nb_bits;
-        return decoded; 
+        return decoded;
     }
-    void encode(int number, BitArray::iterator& bits) const { 
-        encode_number(number, bits, _nb_bits); 
+    void encode(int number, BitArray::iterator& bits) const {
+        encode_number(number, bits, _nb_bits);
         bits += _nb_bits;
     }
 
@@ -31,7 +31,7 @@ protected:
 class IntVectorCodec {
 public:
     IntVectorCodec(int nb, int nb_bits) : _codec(nb_bits), _nb(nb) {}
-    void decode(BitArray::const_iterator& bits, vector<int>& res) const { 
+    void decode(BitArray::const_iterator& bits, vector<int>& res) const {
         res.resize(_nb);
         for (int i = 0; i < _nb; i++)
             res[i] = _codec.decode(bits);
@@ -53,14 +53,14 @@ protected:
 // codec for a list of (i1 ,i2) pairs, encoded each with its own number of bits
 class IntPairCodec {
 public:
-    IntPairCodec(int nb_bits1, int nb_bits2) 
+    IntPairCodec(int nb_bits1, int nb_bits2)
         : _codec1(nb_bits1), _codec2(nb_bits2) {}
     void encode(int i1, int i2, BitArray::iterator& bits) const {
         _codec1.encode(i1, bits);
         _codec2.encode(i2, bits);
     }
 
-    void decode(BitArray::const_iterator& bits, int& i1, int& i2) const { 
+    void decode(BitArray::const_iterator& bits, int& i1, int& i2) const {
         i1 = _codec1.decode(bits);
         i2 = _codec2.decode(bits);
     }
@@ -72,12 +72,12 @@ public:
 
 protected:
     IntCodec _codec1;
-    IntCodec _codec2;  
+    IntCodec _codec2;
 };
 
 class ConditionIndexCodec {
 public:
-    ConditionIndexCodec(int var_idx_nb_bits, int set_idx_nb_bits) 
+    ConditionIndexCodec(int var_idx_nb_bits, int set_idx_nb_bits)
         : _codec(var_idx_nb_bits, set_idx_nb_bits) {}
 
     void encode(const ConditionIndex& ci, BitArray::iterator& bits) const {
@@ -89,7 +89,7 @@ public:
             encode(ci, bits);
     }
 
-    void decode(BitArray::const_iterator& bits, ConditionIndex& res) const { 
+    void decode(BitArray::const_iterator& bits, ConditionIndex& res) const {
         _codec.decode(bits, res.var_idx, res.set_idx);
     }
 
@@ -130,7 +130,7 @@ struct IntPairParams {
 
 class ConditionIndexesCodec {
 public:
-    ConditionIndexesCodec(const IntPairParams& params) 
+    ConditionIndexesCodec(const IntPairParams& params)
         : _codec(params.nb_bits1, params.nb_bits2), _nb(params.nb) {}
 
     void encode(const ConditionIndexes& cis, BitArray::iterator& bits) const {
@@ -157,16 +157,16 @@ protected:
 
 class RuleCodec {
 public:
-    RuleCodec(const IntPairParams& params_input, const IntPairParams& params_output) 
+    RuleCodec(const IntPairParams& params_input, const IntPairParams& params_output)
         : _codec_in(params_input), _codec_out(params_output) {}
 
-    void decode(BitArray::const_iterator& bits, ConditionIndexes& cis_in, ConditionIndexes& cis_out) const 
+    void decode(BitArray::const_iterator& bits, ConditionIndexes& cis_in, ConditionIndexes& cis_out) const
     {
         _codec_in.decode(bits, cis_in);
         _codec_out.decode(bits, cis_out);
     }
 
-    void encode(const ConditionIndexes& cis_in, const ConditionIndexes& cis_out, BitArray::iterator& bits) const 
+    void encode(const ConditionIndexes& cis_in, const ConditionIndexes& cis_out, BitArray::iterator& bits) const
     {
         _codec_in.encode(cis_in, bits);
         _codec_out.encode(cis_out, bits);
@@ -187,7 +187,7 @@ private:
 
 class RulesCodec {
 public:
-    RulesCodec(int nb_rules, const IntPairParams& params_input, const IntPairParams& params_output) 
+    RulesCodec(int nb_rules, const IntPairParams& params_input, const IntPairParams& params_output)
         : _codec(params_input, params_output), _codec_default_rules(params_output.nb, params_output.nb_bits2), _nb_rules(nb_rules) {}
 
     int getNbRules() const { return _nb_rules; }
@@ -198,7 +198,7 @@ public:
         decode(it, rules_in, rules_out, default_rules);
     }
     void encode(const vector<ConditionIndexes>& rules_in, const vector<ConditionIndexes>& rules_out, const vector<int>& default_rules,
-         BitArray& bits) const 
+         BitArray& bits) const
     {
         auto it = bits.begin();
         encode(rules_in, rules_out, default_rules, it);
@@ -206,15 +206,15 @@ public:
 
     void decode(BitArray::const_iterator& bits, vector<ConditionIndexes>& rules_in, vector<ConditionIndexes>& rules_out, vector<int>& default_rules) const;
 
-    void encode(const vector<ConditionIndexes>& rules_in, const vector<ConditionIndexes>& rules_out, const vector<int>& default_rules, 
+    void encode(const vector<ConditionIndexes>& rules_in, const vector<ConditionIndexes>& rules_out, const vector<int>& default_rules,
         BitArray::iterator& bits) const;
 
     int size() const { return _codec.size() * getNbRules() + _codec_default_rules.size(); }
 
     inline friend ostream& operator<<(ostream& out, const RulesCodec& codec) {
-        out << "RulesCodec: [" 
-        << "nb_rules=" << codec._nb_rules 
-        << ", " << codec._codec 
+        out << "RulesCodec: ["
+        << "nb_rules=" << codec._nb_rules
+        << ", " << codec._codec
         << ", " << "nb default rules=" << codec._codec_default_rules.getNumberOfElements();
         return out;
     }
@@ -240,7 +240,7 @@ struct PosParams {
 // class FuzzySystemSetPositionsCodec {
 // public:
 //     FuzzySystemSetPositionsCodec(const PosParams& input, const PosParams& output)
-//         : _codec_in(input.nb_sets, input.nb_bits), 
+//         : _codec_in(input.nb_sets, input.nb_bits),
 //         _codec_out(output.nb_sets, output.nb_bits),
 //         _nb_input_vars(input.nb_vars), _nb_output_vars(output.nb_vars)
 //          {}
@@ -265,7 +265,7 @@ struct PosParams {
 
 class DiscretizedFuzzySystemSetPositionsCodec {
 public:
-    DiscretizedFuzzySystemSetPositionsCodec(const PosParams& input, const PosParams& output, 
+    DiscretizedFuzzySystemSetPositionsCodec(const PosParams& input, const PosParams& output,
         const vector<Discretizer>& disc_in, const vector<Discretizer>& disc_out);
 
     int getNbInputVars() const { return _input_params.nb_vars; }
@@ -288,9 +288,9 @@ public:
     int size() const { return _codec_in.size() * getNbInputVars() * _input_params.nb_sets + _codec_out.size() * getNbOutputVars() * _output_params.nb_sets; }
 
     inline friend ostream& operator<<(ostream& out, const DiscretizedFuzzySystemSetPositionsCodec& codec) {
-        out << "DiscretizedFuzzySystemSetPositionsCodec: [" 
-        << "getNbInputVars=" << codec.getNbInputVars() 
-        << ", " << "getNbOutputVars=" << codec.getNbOutputVars() 
+        out << "DiscretizedFuzzySystemSetPositionsCodec: ["
+        << "getNbInputVars=" << codec.getNbInputVars()
+        << ", " << "getNbOutputVars=" << codec.getNbOutputVars()
         << "]";
         return out;
     }

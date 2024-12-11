@@ -9,7 +9,7 @@ double CoopCoevolutionFitnessMethod::coopFitness(bool left, const Genome& genome
         else
             fit = fitness(coop, genome);
         max_fitness = max(max_fitness, fit);
-      
+
     return max_fitness;
 }
 
@@ -28,7 +28,7 @@ CoevGeneration CoevolutionEngine::start(const Genomes& left_genos, const Genomes
 {
     CoevGeneration cogen(left_genos, right_genos);
     Genomes left_coops = selectCooperators(left_genos, _nb_cooperators);
-    Genomes right_coops = selectCooperators(right_genos, _nb_cooperators); 
+    Genomes right_coops = selectCooperators(right_genos, _nb_cooperators);
     // auto left_fitnesses = _fit.coopFitness(true, left_genos, right_coops);
     // auto right_fitnesses = _fit.coopFitness(false, right_genos, left_coops);
 
@@ -71,21 +71,21 @@ CoevGeneration CoevolutionEngine::nextGeneration(CoevGeneration& cogen, bool onl
     CoopCoevolutionFitnessMethodAdaptator left_fit(true, _fit, right_coops);
     if (only_update)
         _left_engine.updateGeneration(cogen.left_gen, left_fit);
-    else 
+    else
         newcogen.left_gen =_left_engine.nextGeneration(cogen.left_gen, left_fit);
 
     Genomes left_coops = selectCooperators(cogen.left_gen.elite, _nb_cooperators);
     CoopCoevolutionFitnessMethodAdaptator right_fit(false, _fit, left_coops);
-    
+
     if (only_update)
         _right_engine.updateGeneration(cogen.right_gen, right_fit);
-    else 
+    else
         newcogen.right_gen = _right_engine.nextGeneration(cogen.right_gen, right_fit);
 
     newcogen._fitness = max(newcogen.left_gen.fitness, newcogen.right_gen.fitness);
 
     return newcogen;
-}   
+}
 
 //  pair<Genomes, Genomes> CoevolutionEngine::computeBest(const CoevGeneration& coevgen)
 //  {

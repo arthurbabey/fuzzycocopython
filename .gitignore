@@ -103,3 +103,4 @@ Makefile
 # Ignore results and generated data
 results/
 *.md.generated/
+__pycache__/

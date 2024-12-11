@@ -16,7 +16,7 @@ void FileUtils::mkdir_if_needed(path file_path) {
 
 void FileUtils::parseCSV(const path& filename, vector<vector<string>>& tokens, char delim) {
   ifstream in(filename);
-  
+
   if (!in.is_open())
     throw std::filesystem::filesystem_error("error opening file", filename, error_code());
   return parseCSV(in, tokens);
@@ -51,7 +51,7 @@ void FileUtils::writeCSV(ostream& out, const DataFrame& df, char delim) {
   const int nbcols = df.nbcols();
   for(int i = 0; i < nbcols; i++) {
     out << colnames[i];
-    if (i != nbcols - 1) 
+    if (i != nbcols - 1)
       out << delim;
   }
   out << endl;

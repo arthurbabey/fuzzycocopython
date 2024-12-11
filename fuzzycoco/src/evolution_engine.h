@@ -26,8 +26,8 @@ struct Generation {
     Generation() {}
     Generation(const Genomes &individuals, const Genomes &elite) : individuals(individuals), elite(elite), fitnesses(individuals.size()) {}
     Generation(const Genomes &individuals) : Generation(individuals, {}) {}
-    // use Implicitly-declared move constructor instead 
-    // Generation(const Generation&& gen) 
+    // use Implicitly-declared move constructor instead
+    // Generation(const Generation&& gen)
     //     : individuals(move(gen.individuals)), elite(move(gen.elite)), fitnesses(move(gen.fitnesses)), fitness(gen.fitness) {}
 
     Genomes individuals;
@@ -53,11 +53,11 @@ public:
     // init the engine with some params, nothing else
     EvolutionEngine(const EvolutionParams& params, RandomGenerator& rng);
     ~EvolutionEngine() {}
-    
+
     const EvolutionParams& params() const { return _params; }
 
     // main function
-    pair<Generation, vector<double>> evolve(const Genomes& genomes, EvolutionFitnessMethod& fitness_method, 
+    pair<Generation, vector<double>> evolve(const Genomes& genomes, EvolutionFitnessMethod& fitness_method,
         int nb_generations, double maxFit);
 
     Generation nextGeneration(const Generation& generation, EvolutionFitnessMethod& fitness_method);

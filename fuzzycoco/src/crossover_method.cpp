@@ -19,6 +19,6 @@ void CrossoverMethod::reproduceAllPairsOf(vector<Genome>& genomes) {
     // process all consecutive pairs. If odd, the last one is not processed
     const int nb_minus_one = genomes.size() - 1;
     for (int i = 0; i < nb_minus_one; i += 2) {
-        reproducePairOf(genomes[i], genomes[i + 1]);   
+        reproducePairOf(genomes[i], genomes[i + 1]);
     }
 }

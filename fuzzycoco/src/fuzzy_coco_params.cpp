@@ -14,9 +14,9 @@ ostream& operator<<(ostream& out, const VarsParams& p) {
 }
 
 bool VarsParams::operator==(const VarsParams& p) const {
-    return 
-        nb_sets == p.nb_sets && 
-        nb_bits_vars == p.nb_bits_vars && 
+    return
+        nb_sets == p.nb_sets &&
+        nb_bits_vars == p.nb_bits_vars &&
         nb_bits_sets == p.nb_bits_sets &&
         nb_bits_pos == p.nb_bits_pos;
 }
@@ -29,9 +29,9 @@ void VarsParams::evaluate_missing(int nb_vars) {
 }
 
 bool GlobalParams::operator==(const GlobalParams& p) const {
-    return 
-        nb_rules == p.nb_rules && 
-        nb_max_var_per_rule == p.nb_max_var_per_rule && 
+    return
+        nb_rules == p.nb_rules &&
+        nb_max_var_per_rule == p.nb_max_var_per_rule &&
         max_generations == p.max_generations &&
         max_fitness == p.max_fitness&&
         nb_cooperators == p.nb_cooperators;
@@ -49,7 +49,7 @@ ostream& operator<<(ostream& out, const GlobalParams& p) {
 }
 
 bool FuzzyCocoParams::has_missing() const {
-    return 
+    return
         global_params.has_missing() ||
         input_vars_params.has_missing() ||
         output_vars_params.has_missing() ||
@@ -59,7 +59,7 @@ bool FuzzyCocoParams::has_missing() const {
 }
 
 bool FuzzyCocoParams::operator==(const FuzzyCocoParams& p) const {
-    return 
+    return
         global_params == p.global_params &&
         input_vars_params == p.input_vars_params &&
         output_vars_params == p.output_vars_params &&

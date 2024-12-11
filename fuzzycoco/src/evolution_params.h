@@ -11,23 +11,23 @@ struct EvolutionParams
     int pop_size = MISSING_DATA_INT;
     // the number of elite individuals
     int elite_size = 5;
-    // the crossover probability 
+    // the crossover probability
     double cx_prob = 0.5;
     // the probability that a genome is a target for a mutation
     double mut_flip_genome = 0.5;
     // the probability that a bit of a genome is mutated
     double mut_flip_bit = 0.025;
 
-    bool has_missing() const { 
-        return is_na(pop_size) || is_na(elite_size) || is_na(cx_prob) || is_na(mut_flip_genome) ||  is_na(mut_flip_bit); 
+    bool has_missing() const {
+        return is_na(pop_size) || is_na(elite_size) || is_na(cx_prob) || is_na(mut_flip_genome) ||  is_na(mut_flip_bit);
     }
 
     bool operator!=(const EvolutionParams& p) const { return ! (*this == p); }
     bool operator==(const EvolutionParams& p) const {
-        return 
-            pop_size == p.pop_size && 
-            // maxGen == p.maxGen && 
-            // maxFit == p.maxFit && 
+        return
+            pop_size == p.pop_size &&
+            // maxGen == p.maxGen &&
+            // maxFit == p.maxFit &&
             elite_size == p.elite_size &&
             // nb_evolvers == p.nb_evolvers &&
             cx_prob == p.cx_prob &&

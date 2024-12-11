@@ -24,9 +24,9 @@ FuzzySystemMetrics FuzzySystemMetricsComputer::computeForOneValue(double predict
   const bool predicted_positive = is_positive(predicted, threshold);
   const bool actual_positive = is_positive(actual, threshold);
   if (predicted_positive == actual_positive) { // true == well classified
-    if (actual_positive) 
-      metrics.true_positives = 1; 
-    else 
+    if (actual_positive)
+      metrics.true_positives = 1;
+    else
       metrics.true_negatives = 1;
 
   // N.B: only set distance if well classified
@@ -34,9 +34,9 @@ FuzzySystemMetrics FuzzySystemMetricsComputer::computeForOneValue(double predict
   metrics.distanceThreshold = distanceToThreshold(predicted, actual, threshold);
   // N.B: distanceMinThreshold not modified
   } else { // false
-    if (actual_positive) 
+    if (actual_positive)
       metrics.false_negatives = 1;
-    else 
+    else
       metrics.false_positives = 1;
   }
 
@@ -44,7 +44,7 @@ FuzzySystemMetrics FuzzySystemMetricsComputer::computeForOneValue(double predict
 }
 
 // N.B: aggregate values for a single output variable
-FuzzySystemMetrics FuzzySystemMetricsComputer::computeForOneVariable(const vector<double>& predicted, const vector<double>& actual, double threshold) 
+FuzzySystemMetrics FuzzySystemMetricsComputer::computeForOneVariable(const vector<double>& predicted, const vector<double>& actual, double threshold)
 {
   assert(predicted.size() == actual.size());
   FuzzySystemMetrics metrics;
@@ -105,7 +105,7 @@ FuzzySystemMetrics FuzzySystemMetricsComputer::compute(const DataFrame& predicte
 
   for (int var_idx = 0; var_idx < nb_vars; var_idx++) {
     auto m = computeForOneVariable(predicted[var_idx], actual[var_idx], thresholds[var_idx]);
-  
+
     double distanceMinThreshold = metrics.distanceMinThreshold;
     metrics += m;
     // KArl TODO: must decide on this

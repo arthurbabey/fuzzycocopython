@@ -43,7 +43,7 @@ public:
     FuzzySet(const FuzzySet& set) : _name(set._name), _position(set._position) {}
     FuzzySet(const FuzzySet&& set) : _name(move(set._name)), _position(set._position) {}
     ~FuzzySet() {}
-    FuzzySet& operator=(FuzzySet set) { 
+    FuzzySet& operator=(FuzzySet set) {
       swap(_name, set._name);
       _position = set._position;
       return *this;
@@ -74,9 +74,9 @@ public:
     }
 
     // for debug purposes
-    bool operator==(const FuzzySet& set) const { 
+    bool operator==(const FuzzySet& set) const {
       return getName() == set.getName() && getPosition() == set.getPosition();
-    } 
+    }
 
 private:
     string _name;

@@ -126,7 +126,7 @@ void destroy_duktape(duk_context* engine) {
     duk_destroy_heap(engine);
 }
 
-FuzzyCocoScriptRunner::FuzzyCocoScriptRunner(ScriptRunnerMethod& runner) 
+FuzzyCocoScriptRunner::FuzzyCocoScriptRunner(ScriptRunnerMethod& runner)
     : _runner(runner)
 {
     // register own instance to duktape C function wrappers

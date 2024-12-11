@@ -3,10 +3,10 @@
   * @author Karl Forner <karl.forner@gmail.com>
   * @date   09.2024
   * @section LICENSE
-  * shamelessly borrowed from https://wandbox.org/permlink/i4P5cipoTsBqV2AL 
+  * shamelessly borrowed from https://wandbox.org/permlink/i4P5cipoTsBqV2AL
   * after reading this post: https://www.cppstories.com/2021/stream-logger/
-  * 
-  * 
+  *
+  *
 */
 #ifndef LOGGING_LOGGER_H
 #define LOGGING_LOGGER_H
@@ -263,7 +263,7 @@ namespace logging {
 	}
 
 	template<typename MirrorBase>
-	inline 
+	inline
 	void SimpleFile_Logger<MirrorBase>::flush() {
 		auto streamPtr {&stream()};
 		auto* logger {mirror_stream(streamPtr)};
@@ -392,7 +392,7 @@ namespace logging {
 
 	inline
 		FileNameGenerator::FileNameGenerator(const std::filesystem::path& filePath) : _filePath {filePath} {
-		
+
 		_fileNameStem = _filePath.filename().string();
 		_fileNameStem.resize(FILE_NAME_LENGTH - 4);
 

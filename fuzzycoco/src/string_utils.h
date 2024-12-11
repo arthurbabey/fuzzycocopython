@@ -13,9 +13,9 @@ namespace StringUtils {
         ostringstream oss;
         // Use fixed and setprecision to avoid scientific notation
         oss << fixed << value;
-        
+
         string result = oss.str();
-        
+
         int idx = result.find_last_not_of('0') + 1;
         int dot_idx = result.find_last_of('.');
         int zeroes_idx = max(idx, dot_idx + 2);

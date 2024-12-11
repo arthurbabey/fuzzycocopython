@@ -26,14 +26,14 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
             }
             return data;
             }, "Convert DataFrame to a list of lists");
-             
+
 
     // Bind FileUtils (namespace functions as static bindings)
-    m.def("parseCSV", py::overload_cast<const std::string&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
+    m.def("parseCSV", py::overload_cast<const std::string&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV),
           "Parse CSV from string content into tokens");
-    m.def("parseCSV", py::overload_cast<std::istream&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
+    m.def("parseCSV", py::overload_cast<std::istream&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV),
           "Parse CSV from input stream into tokens");
-    m.def("parseCSV", py::overload_cast<const std::filesystem::path&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
+    m.def("parseCSV", py::overload_cast<const std::filesystem::path&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV),
           "Parse CSV from file into tokens");
     m.def("slurp", &FileUtils::slurp, "Read entire file content into a string");
 
@@ -44,12 +44,12 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
 
     // Bind FuzzyCocoScriptRunner
     py::class_<FuzzyCocoScriptRunner>(m, "FuzzyCocoScriptRunner")
-        .def(py::init<CocoScriptRunnerMethod&>(), 
+        .def(py::init<CocoScriptRunnerMethod&>(),
              "Initialize with a CocoScriptRunnerMethod instance")
-        .def("evalScriptCode", &FuzzyCocoScriptRunner::evalScriptCode, 
+        .def("evalScriptCode", &FuzzyCocoScriptRunner::evalScriptCode,
              "Evaluate the fuzzy system script from a string");
 
-     // Bind NamedList 
+     // Bind NamedList
      py::class_<NamedList>(m, "NamedList")
         .def_static("parse", [](const std::string &file_path) {
             std::ifstream in(file_path);
@@ -62,5 +62,5 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
      py::class_<FuzzySystem>(m, "FuzzySystem")
         .def_static("load", &FuzzySystem::load, "Load a FuzzySystem from a NamedList")
         .def("smartPredict", &FuzzySystem::smartPredict, "Perform a smart prediction");
-        
+
 }

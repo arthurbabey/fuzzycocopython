@@ -16,7 +16,7 @@ void TogglingMutationMethod::mutate(Genome& genome)
     for (int i = 0; i < nb; i++) {
         if (probs[i] < _mut_flip_genome)
              genome[i] = !genome[i];
-    
+
     }
 }
 

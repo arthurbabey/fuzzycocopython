@@ -40,7 +40,7 @@ public:
 
     int discretize(double value) const {
         if (_step == 0) return 0; // constant
-        return lround((value - _min) / _step); 
+        return lround((value - _min) / _step);
     }
 
     double undiscretize(int discret) const {
@@ -49,11 +49,11 @@ public:
 
     double getStep() const { return _step; }
 
-    bool operator==(const Discretizer& ds) const { 
+    bool operator==(const Discretizer& ds) const {
         return _min == ds._min && _max == ds._max && _nb_bits == ds._nb_bits && _step == ds._step; }
 
     inline friend ostream& operator<<(ostream& out, const Discretizer& ds) {
-        out << "Discretizer: [" << ds._min << "-" << ds._max << "] by " 
+        out << "Discretizer: [" << ds._min << "-" << ds._max << "] by "
         << ds._step << " on " << ds._nb_bits;
     return out;
     }

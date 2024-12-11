@@ -46,7 +46,7 @@ ostream& operator<<(ostream& out, const vector<T>& v) {
   out << "{";
   const int nb = v.size() - 1;
   for (int i = 0; i < nb; ++i) {
-      out << v[i] << ", "; 
+      out << v[i] << ", ";
   }
   if (nb >= 0) out << v[nb];
   out << "}";
@@ -55,7 +55,7 @@ ostream& operator<<(ostream& out, const vector<T>& v) {
 
 inline void throwWithLocation(const string& message, const char* file, int line, const char* func) {
     string fullMessage = "Exception: " + message + "\n"
-                              + "File: " + file 
+                              + "File: " + file
                               + ":" + to_string(line) + "\n"
                               + "Function: " + func;
     throw runtime_error(fullMessage);

@@ -55,18 +55,18 @@ struct FuzzySystemMetrics
   }
 
   bool operator==(const FuzzySystemMetrics& p) const {
-    return 
-        sensitivity == p.sensitivity && 
-        specificity == p.specificity && 
-        accuracy == p.accuracy && 
-        ppv == p.ppv && 
-        rmse == p.rmse && 
-        rrse == p.rrse && 
-        rae == p.rae && 
-        mse == p.mse && 
-        distanceThreshold == p.distanceThreshold && 
-        distanceMinThreshold == p.distanceMinThreshold && 
-        nb_vars == p.nb_vars && 
+    return
+        sensitivity == p.sensitivity &&
+        specificity == p.specificity &&
+        accuracy == p.accuracy &&
+        ppv == p.ppv &&
+        rmse == p.rmse &&
+        rrse == p.rrse &&
+        rae == p.rae &&
+        mse == p.mse &&
+        distanceThreshold == p.distanceThreshold &&
+        distanceMinThreshold == p.distanceMinThreshold &&
+        nb_vars == p.nb_vars &&
         overLearn == p.overLearn &&
         true_positives == p.true_positives &&
         false_positives == p.false_positives &&
@@ -141,23 +141,23 @@ struct FuzzySystemMetrics
   }
 
   inline friend ostream& operator<<(ostream& out, const FuzzySystemMetrics& p) {
-    out << "FuzzySystemMetrics: (" 
-    << "sensitivity=" << p.sensitivity << ", " 
-    << "specificity=" << p.specificity << ", " 
-    << "accuracy=" << p.accuracy << ", " 
+    out << "FuzzySystemMetrics: ("
+    << "sensitivity=" << p.sensitivity << ", "
+    << "specificity=" << p.specificity << ", "
+    << "accuracy=" << p.accuracy << ", "
     << "ppv=" << p.ppv << ", "
-    << "rmse=" << p.rmse << ", " 
-    << "rrse=" << p.rrse << ", " 
-    << "rae=" << p.rae << ", "  
+    << "rmse=" << p.rmse << ", "
+    << "rrse=" << p.rrse << ", "
+    << "rae=" << p.rae << ", "
     << "mse=" << p.mse << ", "
-    << "distanceThreshold=" << p.distanceThreshold << ", " 
-    << "distanceMinThreshold=" << p.distanceMinThreshold << ", " 
-    << "nb_vars=" << p.nb_vars << ", "  
-    << "overLearn=" << p.overLearn  << ", " 
-    << "TP=" << p.true_positives << ", " 
-    << "FP=" << p.false_positives << ", " 
-    << "TN=" << p.true_negatives << ", " 
-    << "FN=" << p.false_negatives << ", " 
+    << "distanceThreshold=" << p.distanceThreshold << ", "
+    << "distanceMinThreshold=" << p.distanceMinThreshold << ", "
+    << "nb_vars=" << p.nb_vars << ", "
+    << "overLearn=" << p.overLearn  << ", "
+    << "TP=" << p.true_positives << ", "
+    << "FP=" << p.false_positives << ", "
+    << "TN=" << p.true_negatives << ", "
+    << "FN=" << p.false_negatives << ", "
     << ")";
 
     return out;

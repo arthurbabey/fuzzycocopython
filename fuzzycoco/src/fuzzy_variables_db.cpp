@@ -2,12 +2,12 @@
 #include <algorithm>
 
 FuzzyVariablesDB::FuzzyVariablesDB(
-  const vector<string>& input_names, int nb_in_sets, 
+  const vector<string>& input_names, int nb_in_sets,
   const vector<string>& output_names, int nb_out_sets)
 {
   const int nb_in_vars = input_names.size();
   const int nb_out_vars = output_names.size();
-  
+
   assert(nb_in_vars > 0);
   assert(nb_in_sets > 0);
   assert(nb_out_vars > 0);
@@ -47,16 +47,16 @@ void FuzzyVariablesDB::setPositions(const Matrix<double>& insets_pos_mat, const 
 NamedList FuzzyVariablesDB::describe() const {
     NamedList vars;
     NamedList input_vars;
-    for (const auto& var : _input_vars) 
+    for (const auto& var : _input_vars)
         input_vars.add(var.getName(), var.describe());
     vars.add("input", input_vars);
-    
+
     NamedList output_vars;
     for (const auto& var : _output_vars) {
         output_vars.add(var.getName(), var.describe());
     }
     vars.add("output", output_vars);
- 
+
 
   return vars;
 }
@@ -91,24 +91,24 @@ FuzzyVariablesDB FuzzyVariablesDB::load(const NamedList& desc) {
 
   FuzzyVariablesDB db(input_names, posin.nbcols(), output_names, posout.nbcols());
   db.setPositions(posin, posout);
-  
+
   // set names
   const int nb_input_sets = db.getNbInputSets();
   for (int i = 0; i < db.getNbInputVars(); i++)
     for (int j = 0; j < nb_input_sets; j++)
       db.getInputVariable(i).getSet(j)->setName(setin[i][j]);
-  
+
   const int nb_output_sets = db.getNbOutputSets();
   for (int i = 0; i < db.getNbOutputVars(); i++)
     for (int j = 0; j < nb_output_sets; j++)
-      db.getOutputVariable(i).getSet(j)->setName(setout[i][j]);  
+      db.getOutputVariable(i).getSet(j)->setName(setout[i][j]);
 
   return db;
 }
 
 FuzzyVariablesDB FuzzyVariablesDB::subset(const vector<int>& input_var_idx, const vector<int>& output_var_idx) const {
   FuzzyVariablesDB db2;
-  
+
   const int nbin = getNbInputVars();
   for (int idx : input_var_idx) {
     assert(idx >= 0 && idx < nbin);
@@ -124,7 +124,7 @@ FuzzyVariablesDB FuzzyVariablesDB::subset(const vector<int>& input_var_idx, cons
   return db2;
 }
 
-ostream& operator<<(ostream& out, const FuzzyVariablesDB& db) 
+ostream& operator<<(ostream& out, const FuzzyVariablesDB& db)
 {
   const char TAB = '\t';
   out << "Fuzzy Variables Database:" << endl;

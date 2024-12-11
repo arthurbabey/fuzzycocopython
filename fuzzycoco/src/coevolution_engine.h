@@ -4,7 +4,7 @@
 #include <memory>
 #include "evolution_engine.h"
 
-class CoevolutionFitnessMethod 
+class CoevolutionFitnessMethod
 {
 public:
   CoevolutionFitnessMethod() {}
@@ -42,7 +42,7 @@ public:
 };
 class CoopCoevolutionFitnessMethodAdaptator : public EvolutionFitnessMethod {
   public:
-    CoopCoevolutionFitnessMethodAdaptator(bool left, CoopCoevolutionFitnessMethod& fit, const Genomes& cooperators) 
+    CoopCoevolutionFitnessMethodAdaptator(bool left, CoopCoevolutionFitnessMethod& fit, const Genomes& cooperators)
       : _left(left), _fit(fit), _cooperators(cooperators) {}
     double fitness(const Genome& genome) override { return _fit.coopFitness(_left, genome, _cooperators);}
   private:
@@ -54,9 +54,9 @@ class CoopCoevolutionFitnessMethodAdaptator : public EvolutionFitnessMethod {
 
 struct CoevGeneration {
   CoevGeneration() {}
-  CoevGeneration(const Genomes& left_genos, const Genomes& right_genos) 
+  CoevGeneration(const Genomes& left_genos, const Genomes& right_genos)
   : left_gen(left_genos), right_gen(right_genos) {}
-  // CoevGeneration(const CoevGeneration&& cogen) 
+  // CoevGeneration(const CoevGeneration&& cogen)
   //       : left_gen(move(cogen.left_gen)), right_gen(move(cogen.right_gen)), fitness(cogen.fitness) {}
 
   Generation left_gen;
@@ -66,15 +66,15 @@ struct CoevGeneration {
   double fitness() const { return _fitness; }
 };
 
-class CoevolutionEngine 
+class CoevolutionEngine
 {
 public:
     // init the engine with some params, nothing else
     // need to check that nb_cooperators <= elite_size
-    CoevolutionEngine(CoopCoevolutionFitnessMethod& fit, EvolutionEngine& left_engine, EvolutionEngine& right_engine, int nb_cooperators) 
+    CoevolutionEngine(CoopCoevolutionFitnessMethod& fit, EvolutionEngine& left_engine, EvolutionEngine& right_engine, int nb_cooperators)
         : _fit(fit), _left_engine(left_engine), _right_engine(right_engine), _nb_cooperators(nb_cooperators) {}
     ~CoevolutionEngine() {}
-    
+
 
     // main function
     pair<CoevGeneration, vector<double>>  evolve(const Genomes& left_genos, const Genomes& right_genos, int nb_generations, double maxFit);

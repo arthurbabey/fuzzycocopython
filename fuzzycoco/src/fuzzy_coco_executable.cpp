@@ -153,11 +153,11 @@ void check_file(const string& filename) {
 
 void check_params(const Params& params) {
     if (params.eval || params.predict) {
-        if (params.eval && params.predict) 
+        if (params.eval && params.predict)
             error("you cannot perform both a prediction and a evaluation !");
-        if (params.fuzzyFile.empty()) 
+        if (params.fuzzyFile.empty())
             error("you must specify a fuzzy system to perform a evaluation/prediction !");
-        if (params.datasetFile.empty()) 
+        if (params.datasetFile.empty())
             error("you must specify a dataset to perform a evaluation/prediction !");
     } else {
         if (params.datasetFile.empty() || params.scriptFile.empty()) {
@@ -174,7 +174,7 @@ void check_params(const Params& params) {
 // this the function that will execute fuzzy coco
 class CocoScriptRunnerMethod : public ScriptRunnerMethod {
 public:
-    CocoScriptRunnerMethod(const DataFrame& df, int seed, const path& output_filename) 
+    CocoScriptRunnerMethod(const DataFrame& df, int seed, const path& output_filename)
         : _df(df), _seed(seed), _output_filename(output_filename) {}
 
     void run(const ScriptParams& params) override {
@@ -202,7 +202,7 @@ public:
         // TODO: rename pop1 in rules
         auto gen = coco.run();
         auto desc = coco.describeBestFuzzySystem();
-        
+
         // save fuzzy system !!
         if (_output_filename.empty()) {
             cout << desc;
@@ -222,7 +222,7 @@ private:
 
 
 void launch(const Params& params) {
-    
+
     // read dataset
     vector<vector<string>> tokens;
     tokens.reserve(1000);
@@ -241,13 +241,13 @@ void launch(const Params& params) {
             FileUtils::writeCSV(cout, predicted);
         } else {
             auto weights = FuzzySystemMetrics::load(desc.get_list("fitness_metrics_weights"));
-            
+
             auto thresh_desc = desc.get_list("defuzz_thresholds");
             const int nb = thresh_desc.size();
             vector<double> thresholds(nb);
             for (int i = 0; i < nb; i++)
                 thresholds[i] = thresh_desc[i].value().get_double();
-            
+
             DataFrame actual = df.subsetColumns(predicted.colnames());
             FuzzySystemWeightedFitness fitter(weights);
             FuzzySystemMetricsComputer computer;
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
 
     Params params = parseArguments(args);
     check_params(params);
-  
+
     if (params.verbose) logger().activate();
     logger() << L_allwaysFlush << L_time << "Fuzzy Coco started\n";
 

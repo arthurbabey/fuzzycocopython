@@ -21,7 +21,7 @@ public:
       double res = min(x, y);
        // DONTCARE VALUE < 0; If the min < 0 ==> x or/and y are < 0 --> return the other (the max) then
        // if both qre < 0 --> < 0
-      return res >= 0 ? res : max(x, y); 
+      return res >= 0 ? res : max(x, y);
     }
 };
 

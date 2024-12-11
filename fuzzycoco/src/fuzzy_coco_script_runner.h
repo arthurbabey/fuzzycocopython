@@ -24,7 +24,7 @@ struct ScriptParams {
   // by convention the output vars are the last columns from the dataset
   int nbOutputVars = 1;
 
-  
+
 };
 
 class ScriptRunnerMethod {
@@ -46,7 +46,7 @@ public:
 
     void evalSimpleCodeThatReturnsAString(const string& code);
     void setParams(const ScriptParams& params);
-    
+
     // main function: to override
     void run();
 

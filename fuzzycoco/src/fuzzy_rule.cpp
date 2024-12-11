@@ -21,7 +21,7 @@ ConditionIndexes FuzzyRule::filterConditionIndexes(int nb_vars, int nb_sets, con
         }
     }
 
-    return goods;   
+    return goods;
 }
 
 ConditionIndexes FuzzyRule::filterConditionIndexesWhenFixedVars(int nb_sets, const ConditionIndexes& cis)
@@ -32,7 +32,7 @@ ConditionIndexes FuzzyRule::filterConditionIndexesWhenFixedVars(int nb_sets, con
     // in this case of fixed vars, the var_idx is just the index of the pair
     for (int i = 0; i < nb_pairs; i++)
         cis2[i].var_idx = i;
-    
+
     return filterConditionIndexes(1, nb_sets, cis2);
 }
 
@@ -129,11 +129,11 @@ ostream& operator<<(ostream& out, const FuzzyRule& rule) {
 // static
 double FuzzyRule::evaluateInputConditionFireLevel(const FuzzyVariablesDB& db, const ConditionIndex& ci, double value)
 {
-    return is_na(value) ? MISSING_DATA_DOUBLE 
-        : db.getInputVariable(ci.var_idx).fuzzify(ci.set_idx, value);     
+    return is_na(value) ? MISSING_DATA_DOUBLE
+        : db.getInputVariable(ci.var_idx).fuzzify(ci.set_idx, value);
 }
 
-double FuzzyRule::evaluateInputConditionFireLevel(int idx, double value) const { 
+double FuzzyRule::evaluateInputConditionFireLevel(int idx, double value) const {
     return evaluateInputConditionFireLevel(getDB(), getInputConditionIndex(idx), value);
 }
 // static
@@ -162,7 +162,7 @@ double FuzzyRule::evaluateFireLevel(const DataFrame& df, const int row) const {
     return evaluateFireLevel(getDB(), getInputConditionIndexes(), df, row);
 }
 
-// static 
+// static
 double FuzzyRule::evaluateFireLevel(const FuzzyVariablesDB& db, const ConditionIndexes& cis,const DataFrame& df, const int row)  {
     const int nb_input = cis.size();
     assert(nb_input > 0);
@@ -174,7 +174,7 @@ double FuzzyRule::evaluateFireLevel(const FuzzyVariablesDB& db, const ConditionI
         const auto& ci = cis[i];
         evals[i] = evaluateInputConditionFireLevel(db, ci, df.at(row, ci.var_idx));
     }
-    
+
     return combineFireLevels(evals);
 }
 

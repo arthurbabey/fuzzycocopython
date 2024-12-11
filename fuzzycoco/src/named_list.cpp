@@ -5,13 +5,13 @@
 #include "string_utils.h"
 
 void Scalar::print(ostream& out) const {
-    if  (holds_alternative<monostate>(*this)) 
+    if  (holds_alternative<monostate>(*this))
         out << "-";
     else if (holds_alternative<int>(*this))
         out << get_int();
     else if (holds_alternative<double>(*this))
         out << StringUtils::prettyDistinguishableDoubleToString(get_double());
-    else out << quoted(get_string());     
+    else out << quoted(get_string());
 }
 
 Scalar Scalar::parse(istream& in) {
@@ -40,7 +40,7 @@ bool NamedList::operator==(const NamedList& l) const {
     for (int i = 0; i < nb; i++) {
         if (! (*_children[i] == *l._children[i]) ) return false;
     }
-    
+
 
     return true;
 }
@@ -102,7 +102,7 @@ const shared_ptr<NamedList> NamedList::fetch(const string& name) const {
 
     for (const auto& child : _children)
         if (child->_name == name) return child;
-        
+
     THROW_WITH_LOCATION("name not found in list: " + name);
     return _children[0]; // to avoid a compiler warning
 }
@@ -124,7 +124,7 @@ void NamedList::print(ostream& out, int indent, bool toplevel) const {
         out << quoted(name()) << ":";
     if (is_list()) {
         out << "{";
-        if (!empty()) 
+        if (!empty())
             out << endl;
         const int nb = size();
         for (int i = 0; i < nb; i++) {
@@ -133,14 +133,14 @@ void NamedList::print(ostream& out, int indent, bool toplevel) const {
                 out << ",";
             out << endl;
         }
-        if (!empty()) 
+        if (!empty())
             out << SPACER;
         out << "}";
     } else {
         _value.print(out);
         // out << endl;
     }
-    if (toplevel) 
+    if (toplevel)
         out << endl;
 
 }

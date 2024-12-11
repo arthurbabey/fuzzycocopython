@@ -103,7 +103,7 @@ protected:
     void add(const NamedList& elt) {
         assert(is_list());
         _children.push_back(make_shared<NamedList>(elt));
-    } 
+    }
 
 private:
     string _name;
