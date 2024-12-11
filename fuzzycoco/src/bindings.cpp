@@ -25,35 +25,22 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
                data.push_back(df.fetchRow(row));
             }
             return data;
-            }, "Convert DataFrame to a list of lists")
-        .def("subsetColumns", 
-             py::overload_cast<int, int>(&DataFrame::subsetColumns, py::const_), 
-             "Subset columns by range (col1 to col2)")
-        .def("subsetColumns", 
-             py::overload_cast<const std::vector<int>&>(&DataFrame::subsetColumns, py::const_), 
-             "Subset columns by indices")
-        .def("subsetColumns", 
-             py::overload_cast<const std::vector<std::string>&>(&DataFrame::subsetColumns, py::const_), 
-             "Subset columns by names");
+            }, "Convert DataFrame to a list of lists");
              
 
     // Bind FileUtils (namespace functions as static bindings)
-    m.def("mkdir_if_needed", &FileUtils::mkdir_if_needed, "Create directory if it doesn't exist");
     m.def("parseCSV", py::overload_cast<const std::string&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
           "Parse CSV from string content into tokens");
     m.def("parseCSV", py::overload_cast<std::istream&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
           "Parse CSV from input stream into tokens");
     m.def("parseCSV", py::overload_cast<const std::filesystem::path&, std::vector<std::vector<std::string>>&, char>(&FileUtils::parseCSV), 
           "Parse CSV from file into tokens");
-    m.def("writeCSV", &FileUtils::writeCSV, "Write DataFrame to output stream as CSV");
     m.def("slurp", &FileUtils::slurp, "Read entire file content into a string");
 
     // Bind CocoScriptRunnerMethod
     py::class_<CocoScriptRunnerMethod>(m, "CocoScriptRunnerMethod")
         .def(py::init<const DataFrame&, int, const std::string&>(),
-             "Initialize with DataFrame, seed, and output path")
-        .def("run", &CocoScriptRunnerMethod::run,
-             "Run the fuzzy system");
+             "Initialize with DataFrame, seed, and output path");
 
     // Bind FuzzyCocoScriptRunner
     py::class_<FuzzyCocoScriptRunner>(m, "FuzzyCocoScriptRunner")

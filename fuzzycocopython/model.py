@@ -1,51 +1,85 @@
-# model.py
-import pandas as pd
+import subprocess
 import os
+import pandas as pd
+import numpy as np
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils.validation import check_is_fitted
 from fuzzycoco_core import DataFrame, CocoScriptRunnerMethod, FuzzyCocoScriptRunner, slurp, NamedList, FuzzySystem
 from .params import Params
 
-class FuzzyModel:
+class FuzzyModel(BaseEstimator, ClassifierMixin):
     def __init__(self, params: Params):
         self.params = params
-        self.model = None
+        self.is_fitted = False
 
-    def fit(self, X: pd.DataFrame, output_filename: str = "fuzzysystem.ffs", script_file: str = ""):
-        data_list = X.astype(str).values.tolist()
-        cdf = DataFrame(data_list, True)
-        runner = CocoScriptRunnerMethod(cdf, self.params.seed, output_filename)
+    def fit(self, X, y, output_filename: str = "fuzzysystem.ffs", script_file: str = "", verbose: bool = False):
+
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+        if not isinstance(y, pd.Series):
+            y = pd.Series(y, name="OUT")
+        else:
+            y = y.rename("OUT")
+
+        combined = pd.concat([X, y], axis=1)
+        # this is done to match requirement of DataFrame constructor
+        header = list(combined.columns)
+        data_list = [header] + combined.astype(str).values.tolist()
+        cdf = DataFrame(data_list, False)
+
+        # use a script file if provided, otherwise generate one
         if script_file:
             script = slurp(script_file)
         else:
             generated_file = self.params.generate_md_file()
             script = slurp(generated_file)
             os.remove(generated_file)
+
+        runner = CocoScriptRunnerMethod(cdf, self.params.seed, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
-        scripter.evalScriptCode(script)
-        self.model = self._load(output_filename)
+        # work around to suppress output from FuzyCocoScriptRunner::run
+        if verbose:
+            scripter.evalScriptCode(script)
+        else:
+            self._run_in_subprocess(scripter.evalScriptCode, script)
+
+        self.model_ = self._load(output_filename)
         return self
 
-    def predict(self, X: pd.DataFrame):
-        if self.model is None:
-            raise RuntimeError("Model not fitted yet")
-        data_list = X.astype(str).values.tolist()
-        cdf = DataFrame(data_list, True)
-        predictions = self.model.smartPredict(cdf)
+    def predict(self, X):
+        check_is_fitted(self, "model_")
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
+        header = list(X.columns)
+        data_list = [header] + X.astype(str).values.tolist()
+        cdf = DataFrame(data_list, False)
+
+        predictions = self.model_.smartPredict(cdf)
         predictions_list = predictions.to_list()
-        return pd.DataFrame(predictions_list)
+        # Return as a Series for scikit-learn compatibility
+        return pd.Series([row[0] for row in predictions_list], index=X.index)
 
-    def score(self, X: pd.DataFrame, y: pd.Series):
-        y_pred = self.predict(X).iloc[:, 0]
+    def score(self, X, y):
+        check_is_fitted(self, "model_")
+        y_pred = self.predict(X)
         return (y_pred == y).mean()
-
-    def evaluate(self, X: pd.DataFrame, y: pd.Series):
-        y_pred = self.predict(X).iloc[:, 0]
-        return {
-            "accuracy": (y_pred == y).mean()
-        }
-
-    def save(self, filename: str):
-        pass
 
     def _load(self, filename: str):
         desc = NamedList.parse(filename)
         return FuzzySystem.load(desc.get_list("fuzzy_system"))
+
+    def _run_in_subprocess(self, func, *args):
+        script_path = "/tmp/temp_script.py"
+        with open(script_path, "w") as f:
+            f.write(
+                f"from fuzzycoco_core import *\n"
+                f"scripter = {func.__self__.__class__.__name__}(*{args})\n"
+                f"scripter.{func.__name__}(*{args})\n"
+            )
+        subprocess.run(
+            ["python", script_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        os.remove(script_path)

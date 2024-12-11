@@ -2,7 +2,7 @@
   "source_dir": "/Users/arthurbabey/Projects/FuzzyCocoPython",
   "build_dir": "/Users/arthurbabey/Projects/FuzzyCocoPython/build",
   "cmake_path": "/opt/homebrew/bin/cmake",
-  "skbuild_path": "/private/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/pip-build-env-dac7o1m3/overlay/lib/python3.11/site-packages/scikit_build_core",
+  "skbuild_path": "/private/var/folders/7p/vsz_gnkx7sg_k1blv9xktznr0000gn/T/pip-build-env-x_jrbizi/overlay/lib/python3.11/site-packages/scikit_build_core",
   "skbuild_version": "0.10.7",
   "python_executable": "/Users/arthurbabey/miniconda3/envs/fuzzypy-env/bin/python"
 }
