@@ -1,0 +1,1 @@
+/Users/arthurbabey/Projects/FuzzyCocoPython/fuzzycocopython/fuzzycoco_core.so

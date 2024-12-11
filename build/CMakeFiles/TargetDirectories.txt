@@ -1,0 +1,13 @@
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/edit_cache.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/rebuild_cache.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/list_install_components.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/install.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/install/local.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/CMakeFiles/install/strip.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/fuzzycoco_core.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/edit_cache.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/rebuild_cache.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/list_install_components.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/install.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/install/local.dir
+/Users/arthurbabey/Projects/FuzzyCocoPython/build/fuzzycoco/CMakeFiles/install/strip.dir
