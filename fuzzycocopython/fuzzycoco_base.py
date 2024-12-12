@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-import numpy as np
 import pandas as pd
 from fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -11,40 +10,39 @@ from fuzzycoco_core import (
     NamedList,
     slurp,
 )
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator
 
 from .params import Params
 
 
-class FuzzyModel(BaseEstimator, ClassifierMixin):
+class FuzzyCocoBase(BaseEstimator):
     def __init__(self, params: Params):
         self.params = params
-        self.is_fitted = False
+        self.model_ = None
 
-    def fit(
-        self,
-        X,
-        y,
-        output_filename: str = "fuzzySystem.ffs",
-        script_file: str = "",
-        verbose: bool = False,
-    ):
-
+    def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
+        # Handle X
         if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-        if not isinstance(y, pd.Series):
-            y = pd.Series(y, name="OUT")
-        else:
-            y = y.rename("OUT")
+            if feature_names is None:
+                feature_names = [f"Feature_{i+1}" for i in range(X.shape[1])]
+            X = pd.DataFrame(X, columns=feature_names)
 
-        combined = pd.concat([X, y], axis=1)
-        # this is done to match requirement of DataFrame constructor
+        if y is not None:
+            # Handle target
+            if not isinstance(y, pd.Series):
+                y = pd.Series(y, name=target_name)
+            else:
+                y = y.rename(target_name)
+            combined = pd.concat([X, y], axis=1)
+        else:
+            combined = X
+
         header = list(combined.columns)
         data_list = [header] + combined.astype(str).values.tolist()
         cdf = DataFrame(data_list, False)
+        return cdf
 
-        # use a script file if provided, otherwise generate one
+    def _run_script(self, cdf, output_filename, script_file, verbose):
         if script_file:
             script = slurp(script_file)
         else:
@@ -54,34 +52,16 @@ class FuzzyModel(BaseEstimator, ClassifierMixin):
 
         runner = CocoScriptRunnerMethod(cdf, self.params.seed, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
-        # work around to suppress output from FuzyCocoScriptRunner::run
-        # not working yet as fuzzySystem is not save to a file
+
+        # if verbose:
+        # workaround to avoid cerr output from FuzzyCocoScriptRunner::run
+        # workaround disable because then fuzzySystem is not saved at all yet by FuzzyCocoScriptRunner::run
         if True:
             scripter.evalScriptCode(script)
         else:
             self._run_in_subprocess(scripter.evalScriptCode, script)
 
         self.model_ = self._load(output_filename)
-        return self
-
-    def predict(self, X):
-        check_is_fitted(self, "model_")
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-
-        header = list(X.columns)
-        data_list = [header] + X.astype(str).values.tolist()
-        cdf = DataFrame(data_list, False)
-
-        predictions = self.model_.smartPredict(cdf)
-        predictions_list = predictions.to_list()
-        # Return as a Series for scikit-learn compatibility
-        return pd.Series([row[0] for row in predictions_list], index=X.index)
-
-    def score(self, X, y):
-        check_is_fitted(self, "model_")
-        y_pred = self.predict(X)
-        return (y_pred == y).mean()
 
     def _load(self, filename: str):
         desc = NamedList.parse(filename)

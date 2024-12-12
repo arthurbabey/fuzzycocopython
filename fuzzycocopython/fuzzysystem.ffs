@@ -1,5 +1,5 @@
 {
-  "fitness":1.0,
+  "fitness":0.425597,
   "fitness_metrics_weights":{
     "sensitivity":1.0,
     "specificity":1.0,
@@ -20,24 +20,69 @@
   },
   "fuzzy_system":{
     "parameters":{
-      "nb_rules":1,
+      "nb_rules":3,
       "nb_input_sets":2,
       "nb_output_sets":2
     },
     "variables":{
       "input":{
-        "Petal.Length":{
-          "name":"Petal.Length",
+        "bmi":{
+          "name":"bmi",
           "Sets":{
             "Set":{
-              "name":"Petal.Length.1",
-              "position":2.139216,
-              "pretty":"Petal.Length.1@2.139216"
+              "name":"bmi.1",
+              "position":-0.058799,
+              "pretty":"bmi.1@-0.058799"
             },
             "Set":{
-              "name":"Petal.Length.2",
-              "position":2.970588,
-              "pretty":"Petal.Length.2@2.970588"
+              "name":"bmi.2",
+              "position":0.160855,
+              "pretty":"bmi.2@0.160855"
+            }
+          }
+        },
+        "bp":{
+          "name":"bp",
+          "Sets":{
+            "Set":{
+              "name":"bp.1",
+              "position":-0.112399,
+              "pretty":"bp.1@-0.112399"
+            },
+            "Set":{
+              "name":"bp.2",
+              "position":0.078362,
+              "pretty":"bp.2@0.078362"
+            }
+          }
+        },
+        "s4":{
+          "name":"s4",
+          "Sets":{
+            "Set":{
+              "name":"s4.1",
+              "position":0.053907,
+              "pretty":"s4.1@0.053907"
+            },
+            "Set":{
+              "name":"s4.2",
+              "position":0.108285,
+              "pretty":"s4.2@0.108285"
+            }
+          }
+        },
+        "s5":{
+          "name":"s5",
+          "Sets":{
+            "Set":{
+              "name":"s5.1",
+              "position":-0.109803,
+              "pretty":"s5.1@-0.109803"
+            },
+            "Set":{
+              "name":"s5.2",
+              "position":0.117303,
+              "pretty":"s5.2@0.117303"
             }
           }
         }
@@ -48,13 +93,13 @@
           "Sets":{
             "Set":{
               "name":"OUT.1",
-              "position":0.0,
-              "pretty":"OUT.1@0.0"
+              "position":25.0,
+              "pretty":"OUT.1@25.0"
             },
             "Set":{
               "name":"OUT.2",
-              "position":1.0,
-              "pretty":"OUT.2@1.0"
+              "position":346.0,
+              "pretty":"OUT.2@346.0"
             }
           }
         }
@@ -64,11 +109,11 @@
       "rule1":{
         "antecedents":{
           "antecedent":{
-            "var_name":"Petal.Length",
-            "set_name":"Petal.Length.1",
+            "var_name":"bmi",
+            "set_name":"bmi.1",
             "set_index":0,
-            "set_position":2.139216,
-            "set_pretty":"Petal.Length.1@2.139216"
+            "set_position":-0.058799,
+            "set_pretty":"bmi.1@-0.058799"
           }
         },
         "consequents":{
@@ -76,8 +121,55 @@
             "var_name":"OUT",
             "set_name":"OUT.1",
             "set_index":0,
-            "set_position":0.0,
-            "set_pretty":"OUT.1@0.0"
+            "set_position":25.0,
+            "set_pretty":"OUT.1@25.0"
+          }
+        }
+      },
+      "rule2":{
+        "antecedents":{
+          "antecedent":{
+            "var_name":"s5",
+            "set_name":"s5.2",
+            "set_index":1,
+            "set_position":0.117303,
+            "set_pretty":"s5.2@0.117303"
+          }
+        },
+        "consequents":{
+          "consequent":{
+            "var_name":"OUT",
+            "set_name":"OUT.2",
+            "set_index":1,
+            "set_position":346.0,
+            "set_pretty":"OUT.2@346.0"
+          }
+        }
+      },
+      "rule3":{
+        "antecedents":{
+          "antecedent":{
+            "var_name":"bp",
+            "set_name":"bp.1",
+            "set_index":0,
+            "set_position":-0.112399,
+            "set_pretty":"bp.1@-0.112399"
+          },
+          "antecedent":{
+            "var_name":"s4",
+            "set_name":"s4.1",
+            "set_index":0,
+            "set_position":0.053907,
+            "set_pretty":"s4.1@0.053907"
+          }
+        },
+        "consequents":{
+          "consequent":{
+            "var_name":"OUT",
+            "set_name":"OUT.1",
+            "set_index":0,
+            "set_position":25.0,
+            "set_pretty":"OUT.1@25.0"
           }
         }
       }
@@ -87,8 +179,8 @@
         "var_name":"OUT",
         "set_name":"OUT.2",
         "set_index":1,
-        "set_position":1.0,
-        "set_pretty":"OUT.2@1.0"
+        "set_position":346.0,
+        "set_pretty":"OUT.2@346.0"
       }
     }
   },
