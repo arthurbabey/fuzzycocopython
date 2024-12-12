@@ -2,7 +2,9 @@ import os
 import subprocess
 
 import pandas as pd
-from fuzzycoco_core import (
+from sklearn.base import BaseEstimator
+
+from .fuzzycoco_core import (
     CocoScriptRunnerMethod,
     DataFrame,
     FuzzyCocoScriptRunner,
@@ -10,8 +12,6 @@ from fuzzycoco_core import (
     NamedList,
     slurp,
 )
-from sklearn.base import BaseEstimator
-
 from .params import Params
 
 

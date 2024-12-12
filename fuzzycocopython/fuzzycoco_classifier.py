@@ -10,7 +10,7 @@ class FuzzyCocoClassifier(FuzzyCocoBase, ClassifierMixin):
         self,
         X,
         y,
-        output_filename: str = "fuzzySystem.ffs",
+        output_filename: str = "./fuzzySystem.ffs",
         script_file: str = "",
         verbose: bool = False,
         feature_names: list = None,
