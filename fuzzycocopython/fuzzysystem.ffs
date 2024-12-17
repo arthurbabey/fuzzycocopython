@@ -1,5 +1,5 @@
 {
-  "fitness":0.425597,
+  "fitness":0.997643,
   "fitness_metrics_weights":{
     "sensitivity":1.0,
     "specificity":1.0,
@@ -26,63 +26,48 @@
     },
     "variables":{
       "input":{
-        "bmi":{
-          "name":"bmi",
+        "Sepal.Length":{
+          "name":"Sepal.Length",
           "Sets":{
             "Set":{
-              "name":"bmi.1",
-              "position":-0.058799,
-              "pretty":"bmi.1@-0.058799"
+              "name":"Sepal.Length.1",
+              "position":4.713333,
+              "pretty":"Sepal.Length.1@4.713333"
             },
             "Set":{
-              "name":"bmi.2",
-              "position":0.160855,
-              "pretty":"bmi.2@0.160855"
+              "name":"Sepal.Length.2",
+              "position":6.3,
+              "pretty":"Sepal.Length.2@6.3"
             }
           }
         },
-        "bp":{
-          "name":"bp",
+        "Petal.Length":{
+          "name":"Petal.Length",
           "Sets":{
             "Set":{
-              "name":"bp.1",
-              "position":-0.112399,
-              "pretty":"bp.1@-0.112399"
+              "name":"Petal.Length.1",
+              "position":1.983529,
+              "pretty":"Petal.Length.1@1.983529"
             },
             "Set":{
-              "name":"bp.2",
-              "position":0.078362,
-              "pretty":"bp.2@0.078362"
+              "name":"Petal.Length.2",
+              "position":5.649412,
+              "pretty":"Petal.Length.2@5.649412"
             }
           }
         },
-        "s4":{
-          "name":"s4",
+        "Petal.Width":{
+          "name":"Petal.Width",
           "Sets":{
             "Set":{
-              "name":"s4.1",
-              "position":0.053907,
-              "pretty":"s4.1@0.053907"
+              "name":"Petal.Width.1",
+              "position":1.295294,
+              "pretty":"Petal.Width.1@1.295294"
             },
             "Set":{
-              "name":"s4.2",
-              "position":0.108285,
-              "pretty":"s4.2@0.108285"
-            }
-          }
-        },
-        "s5":{
-          "name":"s5",
-          "Sets":{
-            "Set":{
-              "name":"s5.1",
-              "position":-0.109803,
-              "pretty":"s5.1@-0.109803"
-            },
-            "Set":{
-              "name":"s5.2",
-              "position":0.117303,
-              "pretty":"s5.2@0.117303"
+              "name":"Petal.Width.2",
+              "position":1.803529,
+              "pretty":"Petal.Width.2@1.803529"
             }
           }
         }
@@ -93,13 +78,13 @@
           "Sets":{
             "Set":{
               "name":"OUT.1",
-              "position":25.0,
-              "pretty":"OUT.1@25.0"
+              "position":0.0,
+              "pretty":"OUT.1@0.0"
             },
             "Set":{
               "name":"OUT.2",
-              "position":346.0,
-              "pretty":"OUT.2@346.0"
+              "position":2.0,
+              "pretty":"OUT.2@2.0"
             }
           }
         }
@@ -109,11 +94,18 @@
       "rule1":{
         "antecedents":{
           "antecedent":{
-            "var_name":"bmi",
-            "set_name":"bmi.1",
+            "var_name":"Petal.Width",
+            "set_name":"Petal.Width.1",
             "set_index":0,
-            "set_position":-0.058799,
-            "set_pretty":"bmi.1@-0.058799"
+            "set_position":1.295294,
+            "set_pretty":"Petal.Width.1@1.295294"
+          },
+          "antecedent":{
+            "var_name":"Sepal.Length",
+            "set_name":"Sepal.Length.2",
+            "set_index":1,
+            "set_position":6.3,
+            "set_pretty":"Sepal.Length.2@6.3"
           }
         },
         "consequents":{
@@ -121,19 +113,19 @@
             "var_name":"OUT",
             "set_name":"OUT.1",
             "set_index":0,
-            "set_position":25.0,
-            "set_pretty":"OUT.1@25.0"
+            "set_position":0.0,
+            "set_pretty":"OUT.1@0.0"
           }
         }
       },
       "rule2":{
         "antecedents":{
           "antecedent":{
-            "var_name":"s5",
-            "set_name":"s5.2",
+            "var_name":"Petal.Length",
+            "set_name":"Petal.Length.2",
             "set_index":1,
-            "set_position":0.117303,
-            "set_pretty":"s5.2@0.117303"
+            "set_position":5.649412,
+            "set_pretty":"Petal.Length.2@5.649412"
           }
         },
         "consequents":{
@@ -141,35 +133,28 @@
             "var_name":"OUT",
             "set_name":"OUT.2",
             "set_index":1,
-            "set_position":346.0,
-            "set_pretty":"OUT.2@346.0"
+            "set_position":2.0,
+            "set_pretty":"OUT.2@2.0"
           }
         }
       },
       "rule3":{
         "antecedents":{
           "antecedent":{
-            "var_name":"bp",
-            "set_name":"bp.1",
-            "set_index":0,
-            "set_position":-0.112399,
-            "set_pretty":"bp.1@-0.112399"
-          },
-          "antecedent":{
-            "var_name":"s4",
-            "set_name":"s4.1",
-            "set_index":0,
-            "set_position":0.053907,
-            "set_pretty":"s4.1@0.053907"
+            "var_name":"Petal.Length",
+            "set_name":"Petal.Length.2",
+            "set_index":1,
+            "set_position":5.649412,
+            "set_pretty":"Petal.Length.2@5.649412"
           }
         },
         "consequents":{
           "consequent":{
             "var_name":"OUT",
-            "set_name":"OUT.1",
-            "set_index":0,
-            "set_position":25.0,
-            "set_pretty":"OUT.1@25.0"
+            "set_name":"OUT.2",
+            "set_index":1,
+            "set_position":2.0,
+            "set_pretty":"OUT.2@2.0"
           }
         }
       }
@@ -177,10 +162,10 @@
     "default_rules":{
       "rule1":{
         "var_name":"OUT",
-        "set_name":"OUT.2",
-        "set_index":1,
-        "set_position":346.0,
-        "set_pretty":"OUT.2@346.0"
+        "set_name":"OUT.1",
+        "set_index":0,
+        "set_position":0.0,
+        "set_pretty":"OUT.1@0.0"
       }
     }
   },
