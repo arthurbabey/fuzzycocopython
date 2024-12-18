@@ -3,6 +3,7 @@ import subprocess
 
 import pandas as pd
 from sklearn.base import BaseEstimator
+from sklearn.utils.validation import check_array
 
 from .fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -30,7 +31,7 @@ class FuzzyCocoBase(BaseEstimator):
         outSetsCodeSize=1,
         inSetsPosCodeSize=8,
         outSetPosCodeSize=1,
-        maxGenPop1=100,
+        maxGenPop1=150,
         maxFitPop1=0.999,
         elitePop1=10,
         popSizePop1=350,
@@ -101,12 +102,11 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshActivated = threshActivated
         self.script_file = script_file
         self.verbose = verbose
-        # placeholder for the model
-        self.model_ = None
 
     def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
         # Handle X
         if not isinstance(X, pd.DataFrame):
+            X = check_array(X, ensure_2d=True)
             if feature_names is None:
                 feature_names = [f"Feature_{i+1}" for i in range(X.shape[1])]
             X = pd.DataFrame(X, columns=feature_names)
@@ -124,7 +124,7 @@ class FuzzyCocoBase(BaseEstimator):
         header = list(combined.columns)
         data_list = [header] + combined.astype(str).values.tolist()
         cdf = DataFrame(data_list, False)
-        return cdf
+        return cdf, combined
 
     def _run_script(self, cdf, output_filename, script_file, verbose):
         if script_file:
