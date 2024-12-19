@@ -1,11 +1,10 @@
 import os
+import random
 import subprocess
 
-import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.metrics import accuracy_score
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.base import BaseEstimator
+from sklearn.utils.validation import check_array
 
 from .fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -21,7 +20,7 @@ from .utils import generate_md_file
 class FuzzyCocoBase(BaseEstimator):
     def __init__(
         self,
-        random_state=1,
+        random_state=None,
         nbRules=3,
         nbMaxVarPerRule=3,
         nbOutVars=1,
@@ -33,7 +32,7 @@ class FuzzyCocoBase(BaseEstimator):
         outSetsCodeSize=1,
         inSetsPosCodeSize=8,
         outSetPosCodeSize=1,
-        maxGenPop1=150,
+        maxGenPop1=250,
         maxFitPop1=0.999,
         elitePop1=10,
         popSizePop1=350,
@@ -139,7 +138,12 @@ class FuzzyCocoBase(BaseEstimator):
             script = slurp(generated_file)
             os.remove(generated_file)
 
-        runner = CocoScriptRunnerMethod(cdf, self.random_state, output_filename)
+        seed = (
+            self.random_state
+            if self.random_state is not None
+            else random.randint(0, 1000000)
+        )
+        runner = CocoScriptRunnerMethod(cdf, seed, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
 
         # Run the script
