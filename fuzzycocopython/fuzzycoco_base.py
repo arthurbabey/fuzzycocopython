@@ -1,9 +1,11 @@
 import os
 import subprocess
 
+import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_array
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score
+from sklearn.utils.validation import check_array, check_is_fitted
 
 from .fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -60,7 +62,6 @@ class FuzzyCocoBase(BaseEstimator):
         script_file=None,
         verbose=False,
     ):
-
         self.random_state = random_state
         # params of FuzzyCoco
         self.nbRules = nbRules
@@ -104,15 +105,19 @@ class FuzzyCocoBase(BaseEstimator):
         self.verbose = verbose
 
     def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
-        # Handle X
+        # If no feature_names are provided here, fallback to self.feature_names_in_ if it exists
+        if feature_names is None and hasattr(self, "feature_names_in_"):
+            feature_names = self.feature_names_in_
+
+        # Convert X to DataFrame if not already
         if not isinstance(X, pd.DataFrame):
             X = check_array(X, ensure_2d=True)
             if feature_names is None:
                 feature_names = [f"Feature_{i+1}" for i in range(X.shape[1])]
             X = pd.DataFrame(X, columns=feature_names)
 
+        # Combine X and y if y is provided
         if y is not None:
-            # Handle target
             if not isinstance(y, pd.Series):
                 y = pd.Series(y, name=target_name)
             else:
@@ -137,13 +142,8 @@ class FuzzyCocoBase(BaseEstimator):
         runner = CocoScriptRunnerMethod(cdf, self.random_state, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
 
-        # if verbose:
-        # workaround to avoid cerr output from FuzzyCocoScriptRunner::run
-        # workaround disable because then fuzzySystem is not saved at all yet by FuzzyCocoScriptRunner::run
-        if True:
-            scripter.evalScriptCode(script)
-        else:
-            self._run_in_subprocess(scripter.evalScriptCode, script)
+        # Run the script
+        scripter.evalScriptCode(script)
 
         self.model_ = self._load(output_filename)
 
