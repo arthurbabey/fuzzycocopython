@@ -36,9 +36,10 @@ def generate_md_file(
     overLearnW,
     threshold,
     threshActivated,
+    script_filename,
 ):
 
-    filename = "fuzzycoco_script_test.md"
+    filename = script_filename
     with open(filename, "w") as f:
         f.write(
             "/* FUGE-LC Reference script\n     Note: the name of the functions cannot be changed\n*/\n"

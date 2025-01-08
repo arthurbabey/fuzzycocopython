@@ -33,7 +33,7 @@ class FuzzyCocoBase(BaseEstimator):
         outSetsCodeSize=1,
         inSetsPosCodeSize=8,
         outSetPosCodeSize=1,
-        maxGenPop1=150,
+        maxGenPop1=500,
         maxFitPop1=0.999,
         elitePop1=10,
         popSizePop1=350,
@@ -60,6 +60,7 @@ class FuzzyCocoBase(BaseEstimator):
         threshold=0.5,
         threshActivated=True,
         script_file=None,
+        script_filename="script.fs",
         verbose=False,
     ):
         self.random_state = random_state
@@ -102,6 +103,7 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshold = threshold
         self.threshActivated = threshActivated
         self.script_file = script_file
+        self.script_filename = script_filename
         self.verbose = verbose
 
     def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
@@ -186,6 +188,7 @@ class FuzzyCocoBase(BaseEstimator):
             self.overLearnW,
             self.threshold,
             self.threshActivated,
+            script_filename=self.script_filename,
         )
 
     def _load(self, filename: str):
