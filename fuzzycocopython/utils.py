@@ -1,7 +1,7 @@
 import uuid
 
 
-def generate_md_file(
+def generate_fs_file(
     nbRules,
     nbMaxVarPerRule,
     nbOutVars,

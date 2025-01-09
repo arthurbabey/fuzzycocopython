@@ -14,7 +14,7 @@ from .fuzzycoco_core import (
     NamedList,
     slurp,
 )
-from .utils import generate_md_file
+from .utils import generate_fs_file
 
 
 class FuzzyCocoBase(BaseEstimator):
@@ -32,7 +32,7 @@ class FuzzyCocoBase(BaseEstimator):
         outSetsCodeSize=1,
         inSetsPosCodeSize=8,
         outSetPosCodeSize=1,
-        maxGenPop1=500,
+        maxGenPop1=100,
         maxFitPop1=0.999,
         elitePop1=10,
         popSizePop1=350,
@@ -130,7 +130,7 @@ class FuzzyCocoBase(BaseEstimator):
 
     def _run_script(self, cdf, output_filename):
 
-        generated_file = self._generate_md_files()
+        generated_file = self._generate_fs_files()
         script = slurp(generated_file)
         os.remove(generated_file)
 
@@ -147,8 +147,8 @@ class FuzzyCocoBase(BaseEstimator):
 
         self.model_ = self._load(output_filename)
 
-    def _generate_md_files(self):
-        return generate_md_file(
+    def _generate_fs_files(self):
+        return generate_fs_file(
             self.nbRules,
             self.nbMaxVarPerRule,
             self.nbOutVars,
