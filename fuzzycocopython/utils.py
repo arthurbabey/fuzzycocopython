@@ -1,3 +1,6 @@
+import uuid
+
+
 def generate_md_file(
     nbRules,
     nbMaxVarPerRule,
@@ -36,16 +39,14 @@ def generate_md_file(
     overLearnW,
     threshold,
     threshActivated,
-    script_filename,
 ):
 
-    filename = script_filename
+    unique_id = str(uuid.uuid4())
+    filename = f"temp_file_{unique_id}.fs"
+
     with open(filename, "w") as f:
-        f.write(
-            "/* FUGE-LC Reference script\n     Note: the name of the functions cannot be changed\n*/\n"
-        )
-        f.write('experiment_name = "Mile";\n')
-        f.write('savePath = "/Users/mer/Desktop/Donnee_Karl/results";\n')
+        f.write('experiment_name = "placeholder";\n')
+        f.write('savePath = "placeholder";\n')
         f.write("nbRules = " + str(nbRules) + ";\n")
         f.write("nbMaxVarPerRule = " + str(nbMaxVarPerRule) + ";\n")
         f.write("nbOutVars = " + str(nbOutVars) + ";\n")

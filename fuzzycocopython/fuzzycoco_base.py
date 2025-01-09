@@ -58,8 +58,6 @@ class FuzzyCocoBase(BaseEstimator):
         overLearnW=0.0,
         threshold=0.5,
         threshActivated=True,
-        script_file=None,
-        script_filename="script.fs",
         verbose=False,
     ):
         self.random_state = random_state
@@ -101,8 +99,6 @@ class FuzzyCocoBase(BaseEstimator):
         self.overLearnW = overLearnW
         self.threshold = threshold
         self.threshActivated = threshActivated
-        self.script_file = script_file
-        self.script_filename = script_filename
         self.verbose = verbose
 
     def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
@@ -132,13 +128,11 @@ class FuzzyCocoBase(BaseEstimator):
         cdf = DataFrame(data_list, False)
         return cdf, combined
 
-    def _run_script(self, cdf, output_filename, script_file, verbose):
-        if script_file:
-            script = slurp(script_file)
-        else:
-            generated_file = self._generate_md_files()
-            script = slurp(generated_file)
-            os.remove(generated_file)
+    def _run_script(self, cdf, output_filename):
+
+        generated_file = self._generate_md_files()
+        script = slurp(generated_file)
+        os.remove(generated_file)
 
         seed = (
             self.random_state
@@ -192,24 +186,8 @@ class FuzzyCocoBase(BaseEstimator):
             self.overLearnW,
             self.threshold,
             self.threshActivated,
-            script_filename=self.script_filename,
         )
 
     def _load(self, filename: str):
         desc = NamedList.parse(filename)
         return FuzzySystem.load(desc.get_list("fuzzy_system"))
-
-    def _run_in_subprocess(self, func, *args):
-        script_path = "/tmp/temp_script.py"
-        with open(script_path, "w") as f:
-            f.write(
-                f"from fuzzycoco_core import *\n"
-                f"scripter = {func.__self__.__class__.__name__}(*{args})\n"
-                f"scripter.{func.__name__}(*{args})\n"
-            )
-        subprocess.run(
-            ["python", script_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        os.remove(script_path)

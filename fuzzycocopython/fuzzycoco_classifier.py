@@ -13,8 +13,6 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         X,
         y,
         output_filename: str = "./fuzzySystem.ffs",
-        script_file: str = "",
-        verbose: bool = False,
         feature_names: list = None,
         target_name: str = "OUT",
     ):
@@ -48,7 +46,7 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         else:
             self.n_features_in_ = len(combined.columns)
 
-        self._run_script(cdf, output_filename, script_file, verbose)
+        self._run_script(cdf, output_filename)
         return self
 
     def predict(self, X, feature_names: list = None):
