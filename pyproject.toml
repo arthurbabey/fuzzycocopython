@@ -26,7 +26,6 @@ build-backend = "scikit_build_core.build"
 cmake.verbose = true
 logging.level = "INFO"
 build-dir = "build"
-install-dir = "fuzzycocopython"  # Ensures .so is placed inside the package
 
 [tool.setuptools.package-data]
 fuzzycocopython = ["*.so"]  # Ensure .so files are installed with the package
