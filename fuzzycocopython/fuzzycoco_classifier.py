@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.utils.validation import check_array, check_is_fitted
 
 from .fuzzycoco_base import FuzzyCocoBase
+from .utils import extract_fuzzy_rules, parse_fuzzy_rules
 
 
 class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
@@ -16,6 +17,7 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         feature_names: list = None,
         target_name: str = "OUT",
     ):
+
         # If X is a DataFrame, preserve its columns before calling check_array
         if isinstance(X, pd.DataFrame):
             self.feature_names_in_ = X.columns.tolist()
@@ -47,6 +49,9 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
             self.n_features_in_ = len(combined.columns)
 
         self._run_script(cdf, output_filename)
+
+        # initialize self.rules_ with the parsed rules
+        self.rules_ = parse_fuzzy_rules(output_filename)
         return self
 
     def predict(self, X, feature_names: list = None):
@@ -85,6 +90,33 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         else:
             return pd.Series(y_mapped, name="predictions")
 
+    def predict_with_importances(self, X, feature_names=None):
+        """Returns predictions and rule activation levels for one or multiple samples."""
+
+        # Get predictions first
+        y_mapped = self.predict(X, feature_names=feature_names)
+
+        # Ensure X is a NumPy array
+        X = np.asarray(X, dtype=float)
+
+        # Get rule definitions
+        rules_df = extract_fuzzy_rules(self)  # Get structured DataFrame of rules
+
+        # Compute rule activations
+        if X.ndim == 1:  # Single instance
+            fire_levels = self.model_.computeRulesFireLevels(X.tolist())
+            rules_df["Activation"] = fire_levels
+            return y_mapped, rules_df
+
+        # Multiple samples
+        fire_levels = [self.model_.computeRulesFireLevels(row.tolist()) for row in X]
+        activations_df = pd.DataFrame(
+            fire_levels,
+            columns=[f"Activation_sample{i+1}" for i in range(len(fire_levels[0]))],
+        )
+
+        return y_mapped, pd.concat([rules_df, activations_df], axis=1)
+
     def score(self, X, y, feature_names: list = None, target_name: str = "OUT"):
         check_is_fitted(
             self, ["model_", "classes_", "feature_names_in_", "n_features_in_"]
@@ -97,3 +129,8 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
 
         y_pred = self.predict(X, feature_names=feature_names)
         return accuracy_score(y, y_pred)
+
+    def _rules(self):
+        """Prints the extracted rules in a structured format."""
+        rules_df = extract_fuzzy_rules(self)
+        print(rules_df)

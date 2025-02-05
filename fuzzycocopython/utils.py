@@ -1,4 +1,59 @@
+import json
 import uuid
+
+import pandas as pd
+
+
+def extract_fuzzy_rules(model):
+    """Extract fuzzy rules from a fitted FuzzyCocoClassifier model."""
+    if not hasattr(model, "rules_"):
+        raise ValueError("Model must be fitted before extracting rules.")
+
+    rule_data = []
+
+    for rule in model.rules_:  # Directly iterate over the list of rules
+        rule_data.append(
+            {
+                "Rule": rule["name"],
+                "Antecedent": f"{rule['antecedent']['variable']} IS {rule['antecedent']['set']}",
+                "Consequent": f"{rule['consequent']['variable']} IS {rule['consequent']['set']}",
+                # "Antecedent Position": rule["antecedent"]["position"],
+                # "Consequent Position": rule["consequent"]["position"]
+            }
+        )
+
+    return pd.DataFrame(rule_data)
+
+
+def parse_fuzzy_rules(ffs_path):
+    """Extract fuzzy rules from a .ffs file."""
+    with open(ffs_path, "r") as file:
+        data = json.load(file)
+
+    rules = []
+    fuzzy_system = data.get("fuzzy_system", {})
+
+    for rule_name, rule_data in fuzzy_system.get("rules", {}).items():
+        antecedents = rule_data.get("antecedents", {})
+        consequents = rule_data.get("consequents", {})
+
+        antecedent = {
+            "variable": antecedents["antecedent"].get("var_name"),
+            "set": antecedents["antecedent"].get("set_name"),
+            "position": antecedents["antecedent"].get("set_position"),
+        }
+
+        consequent = {
+            "variable": consequents["consequent"].get("var_name"),
+            "set": consequents["consequent"].get("set_name"),
+            "position": consequents["consequent"].get("set_position"),
+        }
+
+        rules.append(
+            {"name": rule_name, "antecedent": antecedent, "consequent": consequent}
+        )
+
+    return rules
 
 
 def generate_fs_file(
