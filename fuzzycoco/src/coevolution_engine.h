@@ -40,9 +40,9 @@ public:
   // virtual vector<double> coopFitness(bool left, const Genomes& genomes, const Genomes& cooperators);
   // virtual vector<double> fitnesses(const Genome& genome1);
 };
-class CoopCoevolutionFitnessMethodAdaptator : public EvolutionFitnessMethod {
+class CoopCoevolutionFitnessMethodAdaptor : public EvolutionFitnessMethod {
   public:
-    CoopCoevolutionFitnessMethodAdaptator(bool left, CoopCoevolutionFitnessMethod& fit, const Genomes& cooperators)
+    CoopCoevolutionFitnessMethodAdaptor(bool left, CoopCoevolutionFitnessMethod& fit, const Genomes& cooperators)
       : _left(left), _fit(fit), _cooperators(cooperators) {}
     double fitness(const Genome& genome) override { return _fit.coopFitness(_left, genome, _cooperators);}
   private:

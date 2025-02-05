@@ -13,19 +13,21 @@
 
 #include "fuzzy_system_metrics.h"
 
+// implement the computation of the fitness of a FuzzySystem based on the FuzzySystemMetrics
 class FuzzySystemFitness
 {
 public:
   FuzzySystemFitness() {}
   virtual ~FuzzySystemFitness() {}
 
-  virtual double fitness(const FuzzySystemMetrics& metrics);
+  virtual double fitness(const FuzzySystemMetrics& metrics, double extra_num = 0, double extra_denum = 0);
 };
 
 class FuzzySystemWeightedFitness : public FuzzySystemFitness {
 public:
   FuzzySystemWeightedFitness(const FuzzySystemMetrics& weights) : _weights(weights) {}
-  double fitness(const FuzzySystemMetrics& metrics) override;
+
+  double fitness(const FuzzySystemMetrics& metrics, double extra_num = 0, double extra_denum = 0) override;
 
 private:
   FuzzySystemMetrics _weights;

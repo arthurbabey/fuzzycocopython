@@ -3,72 +3,13 @@
 using namespace logging;
 
 
-FuzzycocoFitnessMethod::FuzzycocoFitnessMethod(FuzzySystem &fuzzy_system, FuzzySystemMetricsComputer &fsmc, FuzzySystemFitness &fit,
-                                               const DataFrame &dfin, const DataFrame &dfout,
-                                               RulesCodec &rules_codec, DiscretizedFuzzySystemSetPositionsCodec &vars_codec,
-                                               const vector<double> &thresholds)
-    : _fuzzy_system(fuzzy_system), _fsmc(fsmc), _rules_codec(rules_codec), _vars_codec(vars_codec),
-      _actual_dfout(dfout), _actual_dfin(dfin),
-      _fit(fit), _thresholds(thresholds)
-{
-  assert(_thresholds.size() == dfout.nbcols());
-  const int nb_rules = _rules_codec.getNbRules();
-  _rules_in.reserve(nb_rules);
-  _rules_out.reserve(nb_rules);
-}
-
-void FuzzycocoFitnessMethod::setRulesGenome(const Genome& rules_genome) {
-  auto it1 = rules_genome.cbegin();
-  _rules_codec.decode(it1, _rules_in, _rules_out, _default_rules);
-
-  _fuzzy_system.setRulesConditions(_rules_in, _rules_out);
-  _fuzzy_system.setDefaultRulesConditions(_default_rules);
-}
-
-void FuzzycocoFitnessMethod::setMFsGenome(const Genome& mfs_genome) {
-  auto it = mfs_genome.cbegin();
-  _vars_codec.decode(it, _pos_in, _pos_out);
-  _fuzzy_system.setVariablesSetPositions(_pos_in, _pos_out);
-}
-
-double FuzzycocoFitnessMethod::fitnessImpl(const Genome& rules_genome, const Genome& mfs_genome)
-{
-    setRulesGenome(rules_genome);
-    setMFsGenome(mfs_genome);
-    if (!_fuzzy_system.ok()) return 0;
-
-    return _fit.fitness(fitMetrics());
-}
-
-FuzzySystemMetrics FuzzycocoFitnessMethod::fitMetrics()
-{
-    auto predicted_output = _fuzzy_system.predict(_actual_dfin);
-    // cerr << "predicted_output:" << predicted_output << endl;
-    auto metrics = _fsmc.compute(predicted_output, _actual_dfout,_thresholds);
-
-    // VERY IMPORTANT FOR NOW: need to add the number of variables used in the rules
-    metrics.nb_vars = _fuzzy_system.computeTotalInputVarsUsedInRules();
-    // cerr << metrics << endl;
-    // cerr << _fuzzy_system;
-
-    return metrics;
-}
-
-
-FuzzyCoco::FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout, const FuzzyCocoParams& params, RandomGenerator& rng)
-  :  _actual_dfout(dfout), _actual_dfin(dfin), _params(params),
-    _rng(rng),
+FuzzyCocoSystem::FuzzyCocoSystem(const DataFrame& dfin, const DataFrame& dfout, const FuzzyCocoParams& params)
+  :
     _rules_codec(params.global_params.nb_rules,
       {min(dfin.nbcols(), params.global_params.nb_max_var_per_rule), params.input_vars_params.nb_bits_vars, params.input_vars_params.nb_bits_sets},
       {dfout.nbcols(), params.output_vars_params.nb_bits_vars, params.output_vars_params.nb_bits_sets}),
-    _fs(dfin.colnames(), dfout.colnames(), params.input_vars_params.nb_sets, params.output_vars_params.nb_sets),
-    _fsmc(),
-    _fsfit(params.metrics_weights),
-    _rules_evo(params.rules_params, rng),
-    _mfs_evo(params.mfs_params, rng)
+    FuzzySystem(dfin.colnames(), dfout.colnames(), params.input_vars_params.nb_sets, params.output_vars_params.nb_sets)
 {
-  if (params.has_missing()) throw runtime_error("ERROR: some parameters in params are missing!");
-
   const int nb_input_vars = dfin.nbcols();
   const int nb_output_vars = dfout.nbcols();
 
@@ -81,14 +22,88 @@ FuzzyCoco::FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout, const FuzzyC
   PosParams pos_output(nb_output_vars, nb_output_sets, params.output_vars_params.nb_bits_pos);
   auto disc_in = FuzzyCoco::createDiscretizersForData(dfin, pos_input.nb_bits);
   auto disc_out = FuzzyCoco::createDiscretizersForData(dfout, pos_output.nb_bits);
-  // DiscretizedFuzzySystemSetPositionsCodec vars_codec(pos_input, pos_output, disc_in, disc_out);
+
   _vars_codec_ptr = make_unique<DiscretizedFuzzySystemSetPositionsCodec>(pos_input, pos_output, disc_in, disc_out);
 
-  _fitter_ptr = make_unique<FuzzycocoFitnessMethod>(FuzzycocoFitnessMethod(_fs, _fsmc, _fsfit, dfin, dfout, _rules_codec, *_vars_codec_ptr,
-    params.output_vars_defuzz_thresholds));
+  // pre-sizing
+  _rules_in.reserve(nb_rules);
+  _rules_out.reserve(nb_rules);
 
-  _coev_ptr = make_unique<CoevolutionEngine>(CoevolutionEngine(*_fitter_ptr,  _rules_evo, _mfs_evo, params.global_params.nb_cooperators));
 }
+
+void FuzzyCocoSystem::setRulesGenome(const Genome& rules_genome) {
+  auto it1 = rules_genome.cbegin();
+  getRulesCodec().decode(it1, _rules_in, _rules_out, _default_rules);
+
+  setRulesConditions(_rules_in, _rules_out);
+  setDefaultRulesConditions(_default_rules);
+}
+
+void FuzzyCocoSystem::setMFsGenome(const Genome& mfs_genome) {
+  auto it = mfs_genome.cbegin();
+  getMFsCodec().decode(it, _pos_in, _pos_out);
+  setVariablesSetPositions(_pos_in, _pos_out);
+}
+
+
+FuzzycocoFitnessMethod::FuzzycocoFitnessMethod(const DataFrame &dfin, const DataFrame &dfout, const FuzzyCocoParams& params)
+    : FuzzycocoFitnessMethod(unique_ptr<FuzzySystemFitness>(new FuzzySystemWeightedFitness(params.metrics_weights)),
+        dfin, dfout, params)
+{}
+
+FuzzycocoFitnessMethod::FuzzycocoFitnessMethod(unique_ptr<FuzzySystemFitness> fit_ptr,
+                                               const DataFrame &dfin, const DataFrame &dfout, const FuzzyCocoParams& params)
+  :   _fuzzy_system(dfin, dfout, params),
+      _fsmc(),
+      _actual_dfout(dfout), _actual_dfin(dfin),
+      _fit_ptr(move(fit_ptr)), _thresholds(params.output_vars_defuzz_thresholds)
+{
+  assert(_thresholds.size() == dfout.nbcols());
+}
+
+
+double FuzzycocoFitnessMethod::fitnessImpl(const Genome& rules_genome, const Genome& mfs_genome)
+{
+    _fuzzy_system.setRulesGenome(rules_genome);
+    _fuzzy_system.setMFsGenome(mfs_genome);
+    if (!_fuzzy_system.ok()) return 0;
+
+    return _fit_ptr->fitness(fitMetrics());
+}
+
+FuzzySystemMetrics FuzzycocoFitnessMethod::fitMetrics()
+{
+    auto predicted_output = _fuzzy_system.predict(_actual_dfin);
+    // cerr << "predicted_output:" << predicted_output << endl;
+    auto metrics = _fsmc.compute(predicted_output, _actual_dfout,_thresholds);
+
+    // VERY IMPORTANT FOR NOW: need to add the number of variables used in the rules
+    metrics.nb_vars = _fuzzy_system.computeTotalInputVarsUsedInRules();
+
+    return metrics;
+}
+
+FuzzyCoco::FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout, unique_ptr<FuzzycocoFitnessMethod> fit_method_ptr,
+   const FuzzyCocoParams& params, RandomGenerator& rng)
+  :  _actual_dfout(dfout), _actual_dfin(dfin), _params(params),
+    _rng(rng),
+    // _fs(dfin, dfout, params),
+    _rules_evo(params.rules_params, rng),
+    _mfs_evo(params.mfs_params, rng),
+    _fitter_ptr(move(fit_method_ptr)),
+    _coev_ptr(make_unique<CoevolutionEngine>(CoevolutionEngine(*_fitter_ptr,  _rules_evo, _mfs_evo, params.global_params.nb_cooperators)))
+{
+  if (params.has_missing()) throw runtime_error("ERROR: some parameters in params are missing!");
+}
+
+FuzzyCoco::FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout, unique_ptr<FuzzySystemFitness> fit_ptr,
+   const FuzzyCocoParams& params, RandomGenerator& rng)
+  :  FuzzyCoco(dfin, dfout, make_unique<FuzzycocoFitnessMethod>(move(fit_ptr), dfin, dfout, params), params, rng)
+{}
+
+FuzzyCoco::FuzzyCoco(const DataFrame& dfin, const DataFrame& dfout, const FuzzyCocoParams& params, RandomGenerator& rng)
+  : FuzzyCoco(dfin, dfout, unique_ptr<FuzzySystemFitness>(new FuzzySystemWeightedFitness(params.metrics_weights)), params, rng)
+{}
 
 ostream& operator<<(ostream& out, const FuzzyCoco& coco) {
   out << "FuzzyCoco:" << endl;
@@ -97,24 +112,19 @@ ostream& operator<<(ostream& out, const FuzzyCoco& coco) {
   out << coco._params << endl;
   out << "# Input Data" << endl << coco._actual_dfin << endl;
   out << "# Output Data" << endl << coco._actual_dfout << endl;
-  out << "# Rules Codec " << coco.getRulesCodec() << endl;
-  out << "# MFs Codec " << coco.getMFsCodec() << endl;
+  out << "# Rules Codec " << coco.getFuzzySystem().getRulesCodec() << endl;
+  out << "# MFs Codec " << coco.getFuzzySystem().getMFsCodec() << endl;
   return out;
-}
-
-const FuzzySystem& FuzzyCoco::buildFuzzySystem(const Genome& rule_geno, const Genome& mfs_geno)
-{
-  auto& fitter = getFitnessMethod();
-  fitter.setRulesGenome(rule_geno);
-  fitter.setMFsGenome(mfs_geno);
-
-  return fitter.getFuzzySystem();
 }
 
 NamedList FuzzyCoco::describeBestFuzzySystem()
 {
   auto [best_rule, best_mf] = getBest();
-  FuzzySystem fs = buildFuzzySystem(best_rule, best_mf);
+
+  auto& fs = getFuzzySystem();
+  fs.setRulesGenome(best_rule);
+  fs.setMFsGenome(best_mf);
+
   double fitness = getFitnessMethod().fitnessImpl(best_rule, best_mf);
   NamedList desc;
   desc.add("fitness", fitness);
@@ -139,7 +149,7 @@ CoevGeneration FuzzyCoco::start(int nb_pop_rules, int nb_pop_mfs) {
   Genomes rules;
   rules.reserve(nb_pop_rules);
   for (int i = 0; i < nb_pop_rules; i++) {
-    Genome rules_geno(getRulesCodec().size());
+    Genome rules_geno(getFuzzySystem().getRulesCodec().size());
     randomize(rules_geno, _rng);
     rules.push_back(rules_geno);
   }
@@ -147,7 +157,7 @@ CoevGeneration FuzzyCoco::start(int nb_pop_rules, int nb_pop_mfs) {
   Genomes mfs;
   mfs.reserve(nb_pop_mfs);
   for (int i = 0; i < nb_pop_mfs; i++) {
-    Genome mf(getMFsCodec().size());
+    Genome mf(getFuzzySystem().getMFsCodec().size());
     randomize(mf, _rng);
     mfs.push_back(mf);
   }

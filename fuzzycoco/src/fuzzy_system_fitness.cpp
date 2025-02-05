@@ -1,7 +1,7 @@
 #include "fuzzy_system_fitness.h"
 #include <cmath>
 
-double FuzzySystemFitness::fitness(const FuzzySystemMetrics& metrics) {
+double FuzzySystemFitness::fitness(const FuzzySystemMetrics& metrics, double extra_num , double extra_denum) {
   int nb_vars = max(1, metrics.nb_vars);
   double fit =
     metrics.sensitivity
@@ -17,7 +17,7 @@ double FuzzySystemFitness::fitness(const FuzzySystemMetrics& metrics) {
   return fit;
 }
 
-double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics) {
+double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics, double extra_num , double extra_denum) {
   double num =
     _weights.sensitivity * metrics.sensitivity
     + _weights.specificity * metrics.specificity
@@ -29,6 +29,8 @@ double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics) {
     + _weights.mse * pow(2, -metrics.mse )
     + _weights.nb_vars * (1.0  / max(1, metrics.nb_vars));
 
+  num += extra_num;
+
   double denum =
     _weights.sensitivity
     + _weights.specificity
@@ -39,6 +41,8 @@ double FuzzySystemWeightedFitness::fitness(const FuzzySystemMetrics& metrics) {
     + _weights.rae
     + _weights.mse
     + _weights.nb_vars;
+
+  denum += extra_denum;
 
   return num / denum;
 }

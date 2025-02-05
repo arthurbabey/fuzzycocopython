@@ -68,14 +68,14 @@ CoevGeneration CoevolutionEngine::nextGeneration(CoevGeneration& cogen, bool onl
     newcogen.generation_number = cogen.generation_number + 1;
 
     Genomes right_coops = selectCooperators(cogen.right_gen.elite, _nb_cooperators);
-    CoopCoevolutionFitnessMethodAdaptator left_fit(true, _fit, right_coops);
+    CoopCoevolutionFitnessMethodAdaptor left_fit(true, _fit, right_coops);
     if (only_update)
         _left_engine.updateGeneration(cogen.left_gen, left_fit);
     else
         newcogen.left_gen =_left_engine.nextGeneration(cogen.left_gen, left_fit);
 
     Genomes left_coops = selectCooperators(cogen.left_gen.elite, _nb_cooperators);
-    CoopCoevolutionFitnessMethodAdaptator right_fit(false, _fit, left_coops);
+    CoopCoevolutionFitnessMethodAdaptor right_fit(false, _fit, left_coops);
 
     if (only_update)
         _right_engine.updateGeneration(cogen.right_gen, right_fit);

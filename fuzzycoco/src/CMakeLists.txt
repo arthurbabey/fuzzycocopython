@@ -1,18 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(fuzzycoco VERSION 1.0 LANGUAGES C CXX)
 
+# we require at least C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-find_package(pybind11 REQUIRED)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# set(CMAKE_CXX_FLAGS "-g -fprofile-arcs -ftest-coverage")
 
-# Include directories for headers
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/duktape
-    # Add paths to python includes if not found automatically
-    # /Users/arthurbabey/miniconda3/envs/fuzzypy-env/include/python3.11
-    # /Users/arthurbabey/miniconda3/envs/fuzzypy-env/lib/python3.11/site-packages/pybind11/include
-)
 
 # Main source files
 set(SOURCE_FILES
@@ -36,12 +31,14 @@ set(SOURCE_FILES
     named_list.cpp
     selection_method.cpp
     duktape/duktape.c
-    # fuzzy_coco_executable.cpp not necessarily added here if included in bindings.cpp
 )
 
-add_library(fuzzymodel MODULE bindings.cpp ${SOURCE_FILES})
-target_link_libraries(fuzzymodel PRIVATE pybind11::module)
+# ==== fuzzy coco executable
+add_executable(fuzzycoco.exe fuzzy_coco_executable.cpp)
+target_link_libraries(fuzzycoco.exe fuzzycoco_static)
 
-set_target_properties(fuzzymodel PROPERTIES PREFIX "" SUFFIX ".so")
+add_library(fuzzycoco SHARED ${SOURCE_FILES})
+target_include_directories(fuzzycoco PRIVATE  duktape)
 
-message(STATUS "Building Python bindings (fuzzymodel.so)")
+add_library(fuzzycoco_static STATIC ${SOURCE_FILES})
+target_include_directories(fuzzycoco_static PRIVATE  duktape)
