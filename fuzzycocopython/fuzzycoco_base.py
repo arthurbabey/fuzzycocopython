@@ -12,6 +12,7 @@ from .fuzzycoco_core import (
     FuzzyCocoScriptRunner,
     FuzzySystem,
     NamedList,
+    get_logger,
     slurp,
 )
 from .utils import generate_fs_file
@@ -101,6 +102,11 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshActivated = threshActivated
         self.verbose = verbose
 
+        self.logger = get_logger()
+        self.logger.activate(True)
+        self.logger.log("Hello from Python! Logging is now active.")
+        self.logger.flush()
+
     def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
         # If no feature_names are provided here, fallback to self.feature_names_in_ if it exists
         if feature_names is None and hasattr(self, "feature_names_in_"):
@@ -146,6 +152,7 @@ class FuzzyCocoBase(BaseEstimator):
         scripter.evalScriptCode(script)
 
         self.model_ = self._load(output_filename)
+        self.logger.flush()
 
     def _generate_fs_files(self):
         return generate_fs_file(

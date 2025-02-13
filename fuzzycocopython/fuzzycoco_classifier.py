@@ -1,11 +1,16 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score
+from sklearn.utils import check_array
 from sklearn.utils.validation import check_array, check_is_fitted
 
 from .fuzzycoco_base import FuzzyCocoBase
 from .utils import extract_fuzzy_rules, parse_fuzzy_rules
+
+# Assume parse_fuzzy_rules is imported from your module
 
 
 class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
@@ -16,8 +21,8 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         output_filename: str = "./fuzzySystem.ffs",
         feature_names: list = None,
         target_name: str = "OUT",
+        store_fitness_curve: bool = False,
     ):
-
         # If X is a DataFrame, preserve its columns before calling check_array
         if isinstance(X, pd.DataFrame):
             self.feature_names_in_ = X.columns.tolist()
@@ -26,11 +31,9 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
             if feature_names is not None:
                 self.feature_names_in_ = feature_names
 
-        # Convert X and y to arrays (loses DataFrame info if any)
         X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
         y = check_array(y, ensure_2d=False, dtype="numeric", ensure_all_finite=False)
 
-        # If we didn't set feature_names_in_ yet and we have no DataFrame columns:
         if not hasattr(self, "feature_names_in_"):
             if feature_names is not None:
                 self.feature_names_in_ = feature_names
@@ -48,10 +51,29 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         else:
             self.n_features_in_ = len(combined.columns)
 
+        # Run the training script (this calls into your C++ code)
         self._run_script(cdf, output_filename)
-
-        # initialize self.rules_ with the parsed rules
         self.rules_ = parse_fuzzy_rules(output_filename)
+        self.logger.flush()
+
+        if store_fitness_curve:
+            log_file = ".log.txt"
+            try:
+                with open(log_file, "r") as f:
+                    lines = f.read().strip().splitlines()
+                    if lines:
+                        # Assume the last non-empty line contains comma-separated fitness values.
+                        last_line = lines[-1]
+                        splitted = [
+                            s.strip() for s in last_line.split(",") if s.strip()
+                        ]
+                        self.fitness_curve_ = [float(val) for val in splitted]
+                    else:
+                        self.fitness_curve_ = []
+            except Exception as e:
+                self.fitness_curve_ = []
+                print(f"Error reading fitness curve from {log_file}: {e}")
+
         return self
 
     def predict(self, X, feature_names: list = None):

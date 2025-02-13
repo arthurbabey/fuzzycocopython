@@ -14,6 +14,20 @@ namespace py = pybind11;
 PYBIND11_MODULE(fuzzycoco_core, m) {
     m.doc() = "Python bindings for the FuzzyCoco project";
 
+
+    py::class_<logging::Logger>(m, "Logger")
+        // activate, deactivate, flush, log, etc.
+        .def("activate", &logging::Logger::activate)
+        .def("deactivate", [](logging::Logger &self){ self.activate(false); })
+        .def("flush", &logging::Logger::flush)
+        .def("log", [](logging::Logger &self, const std::string &msg){ self << msg; return &self; },
+             py::return_value_policy::reference);
+
+    // The EXACT same logger the C++ code calls:
+    m.def("get_logger", &logging::logger,
+          py::return_value_policy::reference,
+          "Get the global logger instance (which now points to a File_Logger).");
+
     // ==========================
     //  Bind DataFrame
     // ==========================
