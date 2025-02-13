@@ -396,7 +396,7 @@ namespace logging {
 		_fileNameStem = _filePath.filename().string();
 		_fileNameStem.resize(FILE_NAME_LENGTH - 4);
 
-		cerr << "FileNameGenerator::FileNameGenerator(), filePath" << filePath << ", _fileNameStem=" <<  _fileNameStem << endl;
+		// cerr << "FileNameGenerator::FileNameGenerator(), filePath" << filePath << ", _fileNameStem=" <<  _fileNameStem << endl;
 
 		if (!_filePath.has_extension())
 			_filePath += ".txt";
@@ -467,11 +467,16 @@ namespace logging {
 		_ramBuffer.empty_buffer();
 	}
 
-	inline Logger& logger() {
-		static Console_Logger std_log {};
 
-		return std_log;
-	}
+    inline Logger& logger() {
+        // If you want day-based rotation:
+		static SimpleFile_Logger<Logger> fileLog(
+			".log.txt", // base filename
+            L_null               // Start inactive
+            // no mirror (so no console output)
+        );
+        return fileLog;
+    }
 
 
 

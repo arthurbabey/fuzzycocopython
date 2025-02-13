@@ -172,10 +172,10 @@ void FuzzyCocoScriptRunner::evalSimpleCodeThatReturnsAString(const string& code)
 }
 
 void FuzzyCocoScriptRunner::run() {
-    cerr << "##========================================================================\n";
-    cerr << "##FuzzyCocoScriptRunner::run()\n";
-    cerr << "## params: " << _params.coco << endl;
-    cerr << "##========================================================================\n";
+    //cerr << "##========================================================================\n";
+    //cerr << "##FuzzyCocoScriptRunner::run()\n";
+    //cerr << "## params: " << _params.coco << endl;
+    //cerr << "##========================================================================\n";
     _runner.run(_params);
 }
 
