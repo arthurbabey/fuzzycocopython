@@ -1,59 +1,187 @@
 import json
+import os
 import uuid
 
-import pandas as pd
+from lfa_toolbox.core.lv.linguistic_variable import LinguisticVariable
+from lfa_toolbox.core.mf.lin_piece_wise_mf import LinPWMF
+from lfa_toolbox.core.mf.triangular_mf import (
+    LeftShoulderMF,
+    RightShoulderMF,
+    TriangularMF,
+)
+from lfa_toolbox.core.rules.default_fuzzy_rule import DefaultFuzzyRule
+from lfa_toolbox.core.rules.fuzzy_rule import FuzzyRule
+from lfa_toolbox.core.rules.fuzzy_rule_element import Antecedent, Consequent
 
 
-def extract_fuzzy_rules(model):
-    """Extract fuzzy rules from a fitted FuzzyCocoClassifier model."""
-    if not hasattr(model, "rules_"):
-        raise ValueError("Model must be fitted before extracting rules.")
+def parse_fuzzy_system(ffs_file):
+    """
+    Parse a fuzzy system file (JSON format) to extract:
+      - a list of LinguisticVariable objects,
+      - a list of FuzzyRule objects,
+      - a list of DefaultFuzzyRule objects.
 
-    rule_data = []
+    The membership functions for each linguistic variable are created using the specified logic:
+      - If there is only one set: use a LeftShoulderMF from pos to pos+1.
+      - If there are two sets: the first is LeftShoulderMF and the second is RightShoulderMF.
+      - If more than two sets: use LeftShoulderMF for the first, RightShoulderMF for the last,
+        and TriangularMF for the intermediate sets.
 
-    for rule in model.rules_:  # Directly iterate over the list of rules
-        rule_data.append(
-            {
-                "Rule": rule["name"],
-                "Antecedent": f"{rule['antecedent']['variable']} IS {rule['antecedent']['set']}",
-                "Consequent": f"{rule['consequent']['variable']} IS {rule['consequent']['set']}",
-                # "Antecedent Position": rule["antecedent"]["position"],
-                # "Consequent Position": rule["consequent"]["position"]
-            }
+    The antecedent activation function and the implication function are fixed to 'min'
+    (equivalent to FIS.AND_min).
+
+    :param ffs_file: Either a file path to the fuzzy system file or a JSON string.
+    :return: A tuple (linguistic_variables, fuzzy_rules, default_rules)
+    """
+
+    def object_pairs_hook_with_duplicates(pairs):
+        d = {}
+        for key, value in pairs:
+            if key in d:
+                if isinstance(d[key], list):
+                    d[key].append(value)
+                else:
+                    d[key] = [d[key], value]
+            else:
+                d[key] = value
+        return d
+
+    def create_linguistic_variable(var_name, sets_data):
+        """
+        Given a variable name and its "Sets" data from the file,
+        create a LinguisticVariable with membership functions built as follows:
+          - If there is only one set: use a LeftShoulderMF from pos to pos+1.
+          - If there are two sets: the first is LeftShoulderMF and the second is RightShoulderMF.
+          - If more than two sets: use LeftShoulderMF for the first, RightShoulderMF for the last,
+            and TriangularMF for the intermediate sets.
+
+        The "position" value is stored in each membership function (as `mf.center`)
+        for later sorting during plotting.
+        """
+        set_items = sets_data.get("Set")
+        if not isinstance(set_items, list):
+            set_items = [set_items]
+        # Sort set definitions by their 'position'
+        set_items = sorted(set_items, key=lambda s: s.get("position", 0))
+        n = len(set_items)
+        ling_values_dict = {}
+        for i, s in enumerate(set_items):
+            pos = s.get("position")
+            if n == 1:
+                mf = LeftShoulderMF(pos, pos + 1)
+            elif n == 2:
+                if i == 0:
+                    mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
+                else:
+                    mf = RightShoulderMF(set_items[i - 1]["position"], pos)
+            else:
+                if i == 0:
+                    right = (pos + set_items[i + 1]["position"]) / 2
+                    mf = LeftShoulderMF(pos, right)
+                elif i == n - 1:
+                    left = (set_items[i - 1]["position"] + pos) / 2
+                    mf = RightShoulderMF(left, pos)
+                else:
+                    left = (set_items[i - 1]["position"] + pos) / 2
+                    right = (pos + set_items[i + 1]["position"]) / 2
+                    mf = TriangularMF(left, pos, right)
+            # Attach the center position for sorting during plotting.
+            mf.center = pos
+            ling_values_dict[s.get("name")] = mf
+        return LinguisticVariable(var_name, ling_values_dict)
+
+    # Load JSON from file path or directly from a string.
+    if isinstance(ffs_file, str):
+        if os.path.isfile(ffs_file):
+            with open(ffs_file, "r") as f:
+                data = json.load(f, object_pairs_hook=object_pairs_hook_with_duplicates)
+        else:
+            data = json.loads(
+                ffs_file, object_pairs_hook=object_pairs_hook_with_duplicates
+            )
+    else:
+        data = ffs_file
+
+    fuzzy_sys = data.get("fuzzy_system", {})
+
+    # Extract linguistic variables from both 'input' and 'output' sections.
+    variables_section = fuzzy_sys.get("variables", {})
+    linguistic_variables = []
+    # Build a lookup dictionary to map variable names to their LinguisticVariable objects.
+    lv_dict = {}
+    for var_type in ["input", "output"]:
+        for var_key, var_data in variables_section.get(var_type, {}).items():
+            var_name = var_data.get("name", var_key)
+            sets_data = var_data.get("Sets")
+            lv = create_linguistic_variable(var_name, sets_data)
+            linguistic_variables.append(lv)
+            lv_dict[var_name] = lv
+
+    # Fixed functions: using min for both antecedent activation and implication.
+    fixed_act_func = (min, "min")
+    fixed_impl_func = (min, "min")
+
+    # Extract standard fuzzy rules.
+    fuzzy_rules = []
+    rules_section = fuzzy_sys.get("rules", {})
+    for rule_name, rule in rules_section.items():
+        # Handle antecedents: wrap in a list if it's not already.
+        antecedents_raw = rule.get("antecedents", {}).get("antecedent", {})
+        if isinstance(antecedents_raw, list):
+            antecedents_list = antecedents_raw
+        else:
+            antecedents_list = [antecedents_raw]
+
+        # Handle consequents similarly.
+        consequents_raw = rule.get("consequents", {}).get("consequent", {})
+        if isinstance(consequents_raw, list):
+            consequents_list = consequents_raw
+        else:
+            consequents_list = [consequents_raw]
+
+        # Build Antecedent objects.
+        ants = []
+        for ant_data in antecedents_list:
+            var_key = ant_data.get("var_name")
+            # Retrieve the corresponding LinguisticVariable.
+            lv = lv_dict.get(var_key, var_key)
+            ants.append(
+                Antecedent(
+                    lv_name=lv,
+                    lv_value=ant_data.get("set_name"),
+                    is_not=False,
+                )
+            )
+
+        # Build Consequent objects.
+        cons = []
+        for cons_data in consequents_list:
+            var_key = cons_data.get("var_name")
+            lv = lv_dict.get(var_key, var_key)
+            cons.append(
+                Consequent(
+                    lv_name=lv,
+                    lv_value=cons_data.get("set_name"),
+                )
+            )
+
+        frule = FuzzyRule(ants, fixed_act_func, cons, fixed_impl_func)
+        fuzzy_rules.append(frule)
+
+    # Extract default fuzzy rules.
+    default_rules = []
+    default_rules_section = fuzzy_sys.get("default_rules", {})
+    for rule_name, rule in default_rules_section.items():
+        var_key = rule.get("var_name")
+        lv = lv_dict.get(var_key, var_key)
+        cons = Consequent(
+            lv_name=lv,
+            lv_value=rule.get("set_name"),
         )
+        dfrule = DefaultFuzzyRule([cons], fixed_impl_func)
+        default_rules.append(dfrule)
 
-    return pd.DataFrame(rule_data)
-
-
-def parse_fuzzy_rules(ffs_path):
-    """Extract fuzzy rules from a .ffs file."""
-    with open(ffs_path, "r") as file:
-        data = json.load(file)
-
-    rules = []
-    fuzzy_system = data.get("fuzzy_system", {})
-
-    for rule_name, rule_data in fuzzy_system.get("rules", {}).items():
-        antecedents = rule_data.get("antecedents", {})
-        consequents = rule_data.get("consequents", {})
-
-        antecedent = {
-            "variable": antecedents["antecedent"].get("var_name"),
-            "set": antecedents["antecedent"].get("set_name"),
-            "position": antecedents["antecedent"].get("set_position"),
-        }
-
-        consequent = {
-            "variable": consequents["consequent"].get("var_name"),
-            "set": consequents["consequent"].get("set_name"),
-            "position": consequents["consequent"].get("set_position"),
-        }
-
-        rules.append(
-            {"name": rule_name, "antecedent": antecedent, "consequent": consequent}
-        )
-
-    return rules
+    return linguistic_variables, fuzzy_rules, default_rules
 
 
 def generate_fs_file(

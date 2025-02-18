@@ -32,8 +32,8 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
     //  Bind DataFrame
     // ==========================
     py::class_<DataFrame>(m, "DataFrame")
-        .def(py::init<int, int>(), "Initialize with number of rows and columns")
-        .def(py::init<const std::string&, bool>(), "Initialize from a CSV file with row names flag")
+        //.def(py::init<int, int>(), "Initialize with number of rows and columns")
+        //.def(py::init<const std::string&, bool>(), "Initialize from a CSV file with row names flag")
         .def(py::init<const std::vector<std::vector<std::string>>&, bool>(), "Initialize from a 2D vector of strings with row names flag")
         .def("nbcols", &DataFrame::nbcols, "Get the number of columns")
         .def("nbrows", &DataFrame::nbrows, "Get the number of rows")

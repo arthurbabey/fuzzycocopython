@@ -1,16 +1,18 @@
-import datetime
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from lfa_toolbox.core.mf.triangular_mf import (
+    LeftShoulderMF,
+    RightShoulderMF,
+    TriangularMF,
+)
+from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score
-from sklearn.utils import check_array
 from sklearn.utils.validation import check_array, check_is_fitted
 
 from .fuzzycoco_base import FuzzyCocoBase
-from .utils import extract_fuzzy_rules, parse_fuzzy_rules
-
-# Assume parse_fuzzy_rules is imported from your module
+from .utils import parse_fuzzy_system
 
 
 class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
@@ -23,37 +25,34 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         target_name: str = "OUT",
         store_fitness_curve: bool = False,
     ):
-        # If X is a DataFrame, preserve its columns before calling check_array
+        # Handle feature names from DataFrame or parameter
         if isinstance(X, pd.DataFrame):
             self.feature_names_in_ = X.columns.tolist()
-        else:
-            # If it's not a DataFrame, rely on given feature_names or generate them after check_array
-            if feature_names is not None:
-                self.feature_names_in_ = feature_names
+            print(f"Feature names: {self.feature_names_in_}")
+        elif feature_names is not None:
+            self.feature_names_in_ = feature_names
 
+        # Validate inputs
         X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
         y = check_array(y, ensure_2d=False, dtype="numeric", ensure_all_finite=False)
 
         if not hasattr(self, "feature_names_in_"):
-            if feature_names is not None:
-                self.feature_names_in_ = feature_names
-            else:
-                self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
+            self.feature_names_in_ = (
+                feature_names
+                if feature_names is not None
+                else [f"Feature_{i+1}" for i in range(X.shape[1])]
+            )
 
         self.classes_ = np.unique(y)
-
-        # Now that we have feature_names_in_, prepare data
         cdf, combined = self._prepare_data(X, y, self.feature_names_in_, target_name)
+        self.n_features_in_ = (
+            len(self.feature_names_in_) if y is not None else len(combined.columns)
+        )
 
-        # If y is provided, last column is target
-        if y is not None:
-            self.n_features_in_ = len(self.feature_names_in_)
-        else:
-            self.n_features_in_ = len(combined.columns)
-
-        # Run the training script (this calls into your C++ code)
         self._run_script(cdf, output_filename)
-        self.rules_ = parse_fuzzy_rules(output_filename)
+        self.variables_, self.rules_, self.default_rules_ = parse_fuzzy_system(
+            output_filename
+        )
         self.logger.flush()
 
         if store_fitness_curve:
@@ -62,12 +61,9 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
                 with open(log_file, "r") as f:
                     lines = f.read().strip().splitlines()
                     if lines:
-                        # Assume the last non-empty line contains comma-separated fitness values.
                         last_line = lines[-1]
-                        splitted = [
-                            s.strip() for s in last_line.split(",") if s.strip()
-                        ]
-                        self.fitness_curve_ = [float(val) for val in splitted]
+                        parts = [s.strip() for s in last_line.split(",") if s.strip()]
+                        self.fitness_curve_ = [float(val) for val in parts]
                     else:
                         self.fitness_curve_ = []
             except Exception as e:
@@ -77,82 +73,92 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         return self
 
     def predict(self, X, feature_names: list = None):
-        check_is_fitted(
-            self, ["model_", "classes_", "n_features_in_", "feature_names_in_"]
+        # Accept single sample (1D) or multiple samples (2D)
+        X_arr = check_array(
+            X, dtype="numeric", ensure_all_finite=False, ensure_2d=False
         )
+        if X_arr.ndim == 1:
+            X_arr = X_arr.reshape(1, -1)
+            single_sample = True
+        else:
+            single_sample = False
 
-        # Convert X to array
-        X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
-
-        if X.shape[1] != self.n_features_in_:
+        if X_arr.shape[1] != self.n_features_in_:
             raise ValueError(
-                f"X has {X.shape[1]} features, but this model was trained with {self.n_features_in_} features."
+                f"X has {X_arr.shape[1]} features, but model was trained with {self.n_features_in_}."
             )
 
-        # Use stored feature_names_in_ if none given
-        if feature_names is None:
-            feature_names = self.feature_names_in_
-
-        cdf, _ = self._prepare_data(X, None, feature_names)
-
-        predictions = self.model_.smartPredict(cdf)
-        predictions_list = predictions.to_list()
-        y_pred = np.array([int(row[0]) for row in predictions_list])
-
-        if not np.all((y_pred >= 0) & (y_pred < len(self.classes_))):
-            raise ValueError(
-                f"Invalid prediction indices: {y_pred}. Predictions must be in the range [0, {len(self.classes_) - 1}]."
-            )
-
+        feat_names = (
+            feature_names if feature_names is not None else self.feature_names_in_
+        )
+        cdf, _ = self._prepare_data(X_arr, None, feat_names)
+        predictions = self.model_.smartPredict(cdf).to_list()
+        y_pred = np.array([int(row[0]) for row in predictions])
         y_mapped = np.asarray(self.classes_)[y_pred]
 
-        # Return a series with the same index if X was originally a DataFrame with an index
         if isinstance(X, pd.DataFrame):
-            return pd.Series(y_mapped, index=X.index, name="predictions")
+            result = pd.Series(y_mapped, index=X.index, name="predictions")
         else:
-            return pd.Series(y_mapped, name="predictions")
+            result = pd.Series(y_mapped, name="predictions")
 
-    def predict_with_importances(self, X, feature_names=None):
-        """Returns predictions and rule activation levels for one or multiple samples."""
+        return result if not single_sample else result.iloc[0]
 
-        # Get predictions first
-        y_mapped = self.predict(X, feature_names=feature_names)
+    def predict_with_importances(self, X, feature_names: list = None):
 
-        # Ensure X is a NumPy array
-        X = np.asarray(X, dtype=float)
+        # Ensure input is 2D; reshape if single sample.
+        arr = check_array(X, dtype=float, ensure_all_finite=False, ensure_2d=False)
+        if arr.ndim == 1:
+            arr = arr.reshape(1, -1)
+            single_sample = True
+        else:
+            single_sample = False
 
-        # Get rule definitions
-        rules_df = extract_fuzzy_rules(self)  # Get structured DataFrame of rules
+        y_pred = self.predict(arr, feature_names=feature_names)
+        # Ensure rules are fitted
+        check_is_fitted(self, ["rules_"])
 
-        # Compute rule activations
-        if X.ndim == 1:  # Single instance
-            fire_levels = self.model_.computeRulesFireLevels(X.tolist())
-            rules_df["Activation"] = fire_levels
-            return y_mapped, rules_df
+        all_activations = []
+        for row in arr:
+            acts = self.model_.computeRulesFireLevels(row.tolist())
+            merged = []
+            for rule_obj, act in zip(self.rules_, acts):
+                # Build a dictionary representation from the FuzzyRule object.
+                rule_dict = {
+                    "antecedents": [
+                        {"var_name": ant.lv_name.name, "set_name": ant.lv_value}
+                        for ant in rule_obj.antecedents
+                    ],
+                    "consequents": [
+                        {"var_name": cons.lv_name.name, "set_name": cons.lv_value}
+                        for cons in rule_obj.consequents
+                    ],
+                }
+                rule_dict["activation"] = act
+                merged.append(rule_dict)
+            all_activations.append(merged)
 
-        # Multiple samples
-        fire_levels = [self.model_.computeRulesFireLevels(row.tolist()) for row in X]
-        activations_df = pd.DataFrame(
-            fire_levels,
-            columns=[f"Activation_sample{i+1}" for i in range(len(fire_levels[0]))],
-        )
-
-        return y_mapped, pd.concat([rules_df, activations_df], axis=1)
+        if single_sample:
+            return y_pred, all_activations[0]
+        return y_pred, all_activations
 
     def score(self, X, y, feature_names: list = None, target_name: str = "OUT"):
         check_is_fitted(
             self, ["model_", "classes_", "feature_names_in_", "n_features_in_"]
         )
-
-        if not isinstance(y, pd.Series):
-            y = pd.Series(y, name=target_name)
-        else:
-            y = y.rename(target_name)
-
+        y_series = (
+            pd.Series(y, name=target_name)
+            if not isinstance(y, pd.Series)
+            else y.rename(target_name)
+        )
         y_pred = self.predict(X, feature_names=feature_names)
-        return accuracy_score(y, y_pred)
+        return accuracy_score(y_series, y_pred)
 
-    def _rules(self):
-        """Prints the extracted rules in a structured format."""
-        rules_df = extract_fuzzy_rules(self)
-        print(rules_df)
+    def plot_fuzzy_sets(self):
+        for lv in self.variables_:
+            fig, ax = plt.subplots()
+            ax.set_title(lv.name)
+            for label, mf in lv.ling_values.items():
+                # Display each membership function using the toolbox's viewer.
+                MembershipFunctionViewer(mf, ax=ax, label=label)
+            ax.legend()
+            plt.show()

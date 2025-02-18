@@ -152,7 +152,6 @@ class FuzzyCocoBase(BaseEstimator):
         scripter.evalScriptCode(script)
 
         self.model_ = self._load(output_filename)
-        self.logger.flush()
 
     def _generate_fs_files(self):
         return generate_fs_file(

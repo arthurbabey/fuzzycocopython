@@ -5,7 +5,7 @@ from sklearn.metrics import r2_score
 from sklearn.utils.validation import check_array, check_is_fitted
 
 from .fuzzycoco_base import FuzzyCocoBase
-from .utils import parse_fuzzy_rules
+from .utils import parse_fuzzy_system
 
 
 class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
@@ -29,7 +29,9 @@ class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
             self.n_features_in_ = len(self.feature_names_in_)
 
         self._run_script(cdf, output_filename)
-        self.rules_ = parse_fuzzy_rules(output_filename)
+        self.variables_, self.rules_, self.default_rules = parse_fuzzy_system(
+            output_filename
+        )
         return self
 
     def predict(self, X, feature_names: list = None):
