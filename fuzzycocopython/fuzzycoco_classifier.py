@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from lfa_toolbox.core.mf.triangular_mf import (
-    LeftShoulderMF,
-    RightShoulderMF,
-    TriangularMF,
-)
 from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score

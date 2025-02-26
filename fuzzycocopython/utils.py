@@ -6,7 +6,6 @@ import numpy as np
 from lfa_toolbox.core.lv.linguistic_variable import LinguisticVariable
 from lfa_toolbox.core.mf.lin_piece_wise_mf import (
     LeftShoulderMF,
-    LinPWMF,
     RightShoulderMF,
     TriangularMF,
 )
