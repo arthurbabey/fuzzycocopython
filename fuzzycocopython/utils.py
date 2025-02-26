@@ -2,13 +2,15 @@ import json
 import os
 import uuid
 
+import numpy as np
 from lfa_toolbox.core.lv.linguistic_variable import LinguisticVariable
-from lfa_toolbox.core.mf.lin_piece_wise_mf import LinPWMF
-from lfa_toolbox.core.mf.triangular_mf import (
+from lfa_toolbox.core.mf.lin_piece_wise_mf import (
     LeftShoulderMF,
+    LinPWMF,
     RightShoulderMF,
     TriangularMF,
 )
+from lfa_toolbox.core.mf.singleton_mf import SingletonMF
 from lfa_toolbox.core.rules.default_fuzzy_rule import DefaultFuzzyRule
 from lfa_toolbox.core.rules.fuzzy_rule import FuzzyRule
 from lfa_toolbox.core.rules.fuzzy_rule_element import Antecedent, Consequent
@@ -21,17 +23,19 @@ def parse_fuzzy_system(ffs_file):
       - a list of FuzzyRule objects,
       - a list of DefaultFuzzyRule objects.
 
-    The membership functions for each linguistic variable are created using the specified logic:
+    For INPUT variables, membership functions are built as follows:
       - If there is only one set: use a LeftShoulderMF from pos to pos+1.
       - If there are two sets: the first is LeftShoulderMF and the second is RightShoulderMF.
       - If more than two sets: use LeftShoulderMF for the first, RightShoulderMF for the last,
         and TriangularMF for the intermediate sets.
 
+    For OUTPUT variables, membership functions are built as Singletons.
+
     The antecedent activation function and the implication function are fixed to 'min'
     (equivalent to FIS.AND_min).
 
     :param ffs_file: Either a file path to the fuzzy system file or a JSON string.
-    :return: A tuple (linguistic_variables, fuzzy_rules, default_rules)
+    :return: (linguistic_variables, fuzzy_rules, default_rules)
     """
 
     def object_pairs_hook_with_duplicates(pairs):
@@ -46,27 +50,15 @@ def parse_fuzzy_system(ffs_file):
                 d[key] = value
         return d
 
-    def create_linguistic_variable(var_name, sets_data):
-        """
-        Given a variable name and its "Sets" data from the file,
-        create a LinguisticVariable with membership functions built as follows:
-          - If there is only one set: use a LeftShoulderMF from pos to pos+1.
-          - If there are two sets: the first is LeftShoulderMF and the second is RightShoulderMF.
-          - If more than two sets: use LeftShoulderMF for the first, RightShoulderMF for the last,
-            and TriangularMF for the intermediate sets.
-
-        The "position" value is stored in each membership function (as `mf.center`)
-        for later sorting during plotting.
-        """
-        set_items = sets_data.get("Set")
-        if not isinstance(set_items, list):
-            set_items = [set_items]
-        # Sort set definitions by their 'position'
+    def create_input_linguistic_variable(var_name, set_items):
         set_items = sorted(set_items, key=lambda s: s.get("position", 0))
         n = len(set_items)
         ling_values_dict = {}
+
         for i, s in enumerate(set_items):
             pos = s.get("position")
+            set_name = s.get("name")
+
             if n == 1:
                 mf = LeftShoulderMF(pos, pos + 1)
             elif n == 2:
@@ -76,21 +68,32 @@ def parse_fuzzy_system(ffs_file):
                     mf = RightShoulderMF(set_items[i - 1]["position"], pos)
             else:
                 if i == 0:
-                    right = (pos + set_items[i + 1]["position"]) / 2
-                    mf = LeftShoulderMF(pos, right)
+                    mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
                 elif i == n - 1:
-                    left = (set_items[i - 1]["position"] + pos) / 2
-                    mf = RightShoulderMF(left, pos)
+                    mf = RightShoulderMF(set_items[i - 1]["position"], pos)
                 else:
-                    left = (set_items[i - 1]["position"] + pos) / 2
-                    right = (pos + set_items[i + 1]["position"]) / 2
-                    mf = TriangularMF(left, pos, right)
-            # Attach the center position for sorting during plotting.
-            mf.center = pos
-            ling_values_dict[s.get("name")] = mf
+                    mf = TriangularMF(
+                        set_items[i - 1]["position"], pos, set_items[i + 1]["position"]
+                    )
+
+            ling_values_dict[set_name] = mf
+
         return LinguisticVariable(var_name, ling_values_dict)
 
-    # Load JSON from file path or directly from a string.
+    def create_output_linguistic_variable(var_name, set_items):
+        """
+        Build membership functions for output variables as singletons.
+        """
+        set_items = sorted(set_items, key=lambda s: s.get("position", 0))
+        ling_values_dict = {}
+        for s in set_items:
+            pos = s.get("position")
+            set_name = s.get("name")
+            mf = SingletonMF(pos)
+            ling_values_dict[set_name] = mf
+        return LinguisticVariable(var_name, ling_values_dict)
+
+    # Load JSON
     if isinstance(ffs_file, str):
         if os.path.isfile(ffs_file):
             with open(ffs_file, "r") as f:
@@ -103,47 +106,49 @@ def parse_fuzzy_system(ffs_file):
         data = ffs_file
 
     fuzzy_sys = data.get("fuzzy_system", {})
-
-    # Extract linguistic variables from both 'input' and 'output' sections.
     variables_section = fuzzy_sys.get("variables", {})
     linguistic_variables = []
-    # Build a lookup dictionary to map variable names to their LinguisticVariable objects.
     lv_dict = {}
+
     for var_type in ["input", "output"]:
         for var_key, var_data in variables_section.get(var_type, {}).items():
             var_name = var_data.get("name", var_key)
             sets_data = var_data.get("Sets")
-            lv = create_linguistic_variable(var_name, sets_data)
+            if not sets_data:
+                continue
+            set_items = sets_data.get("Set")
+            if not isinstance(set_items, list):
+                set_items = [set_items]
+
+            if var_type == "input":
+                lv = create_input_linguistic_variable(var_name, set_items)
+            else:  # "output"
+                lv = create_output_linguistic_variable(var_name, set_items)
+
             linguistic_variables.append(lv)
             lv_dict[var_name] = lv
 
-    # Fixed functions: using min for both antecedent activation and implication.
-    fixed_act_func = (min, "min")
-    fixed_impl_func = (min, "min")
+    fixed_act_func = (np.min, "AND_min")
+    fixed_impl_func = (np.min, "AND_min")
 
-    # Extract standard fuzzy rules.
     fuzzy_rules = []
     rules_section = fuzzy_sys.get("rules", {})
     for rule_name, rule in rules_section.items():
-        # Handle antecedents: wrap in a list if it's not already.
         antecedents_raw = rule.get("antecedents", {}).get("antecedent", {})
         if isinstance(antecedents_raw, list):
             antecedents_list = antecedents_raw
         else:
             antecedents_list = [antecedents_raw]
 
-        # Handle consequents similarly.
         consequents_raw = rule.get("consequents", {}).get("consequent", {})
         if isinstance(consequents_raw, list):
             consequents_list = consequents_raw
         else:
             consequents_list = [consequents_raw]
 
-        # Build Antecedent objects.
         ants = []
         for ant_data in antecedents_list:
             var_key = ant_data.get("var_name")
-            # Retrieve the corresponding LinguisticVariable.
             lv = lv_dict.get(var_key, var_key)
             ants.append(
                 Antecedent(
@@ -153,7 +158,6 @@ def parse_fuzzy_system(ffs_file):
                 )
             )
 
-        # Build Consequent objects.
         cons = []
         for cons_data in consequents_list:
             var_key = cons_data.get("var_name")
@@ -168,7 +172,6 @@ def parse_fuzzy_system(ffs_file):
         frule = FuzzyRule(ants, fixed_act_func, cons, fixed_impl_func)
         fuzzy_rules.append(frule)
 
-    # Extract default fuzzy rules.
     default_rules = []
     default_rules_section = fuzzy_sys.get("default_rules", {})
     for rule_name, rule in default_rules_section.items():

@@ -72,16 +72,12 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
 
         return self
 
-    def predict(self, X, feature_names: list = None):
-        # Accept single sample (1D) or multiple samples (2D)
+    def _predict(self, X, feature_names: list = None):
         X_arr = check_array(
             X, dtype="numeric", ensure_all_finite=False, ensure_2d=False
         )
         if X_arr.ndim == 1:
             X_arr = X_arr.reshape(1, -1)
-            single_sample = True
-        else:
-            single_sample = False
 
         if X_arr.shape[1] != self.n_features_in_:
             raise ValueError(
@@ -92,16 +88,22 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
             feature_names if feature_names is not None else self.feature_names_in_
         )
         cdf, _ = self._prepare_data(X_arr, None, feat_names)
-        predictions = self.model_.smartPredict(cdf).to_list()
-        y_pred = np.array([int(row[0]) for row in predictions])
+
+        preds = self.model_.smartPredict(cdf).to_list()
+        return np.array([row[0] for row in preds])
+
+    def predict(self, X, feature_names: list = None):
+        raw_vals = self._predict(X, feature_names)
+        y_pred = np.array([round(val) for val in raw_vals])  # Standard rounding
+        y_pred = np.clip(
+            y_pred, 0, len(self.classes_) - 1
+        )  # Ensure indices stay in bounds
         y_mapped = np.asarray(self.classes_)[y_pred]
 
         if isinstance(X, pd.DataFrame):
-            result = pd.Series(y_mapped, index=X.index, name="predictions")
+            return pd.Series(y_mapped, index=X.index, name="predictions")
         else:
-            result = pd.Series(y_mapped, name="predictions")
-
-        return result if not single_sample else result.iloc[0]
+            return pd.Series(y_mapped, name="predictions")
 
     def predict_with_importances(self, X, feature_names: list = None):
 
@@ -162,3 +164,125 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
                 MembershipFunctionViewer(mf, ax=ax, label=label)
             ax.legend()
             plt.show()
+
+    def plot_fuzzification(self, sample, feature_names=None):
+        """
+        For each input linguistic variable used in the model, plot its membership functions
+        and overlay the fuzzification for the corresponding crisp input value.
+
+        Parameters:
+        sample: an array-like of crisp input values (e.g., X_test[sample_index]).
+        feature_names: (optional) a list of feature names corresponding to the columns of sample.
+                        If not provided, generic names "Feature_1", "Feature_2", ... are assumed.
+
+        Note:
+        - The output variable (e.g., with lv.name "OUT") is skipped.
+        - Only those fuzzy variables that are used in the model (i.e. appear in self.variables_)
+            will be plotted.
+        """
+
+        # Build a mapping from feature name to crisp value.
+        if feature_names is not None:
+            sample_dict = {name: value for name, value in zip(feature_names, sample)}
+        else:
+            sample_dict = {f"Feature_{i+1}": value for i, value in enumerate(sample)}
+
+        # Iterate over each linguistic variable in the model.
+        for lv in self.variables_:
+            # Skip the output variable.
+            if lv.name.upper() == "OUT":
+                continue
+            # Check if this variable exists in the sample.
+            if lv.name not in sample_dict:
+                continue
+            crisp_value = sample_dict[lv.name]
+
+            fig, ax = plt.subplots()
+            ax.set_title(f"{lv.name} (Input: {crisp_value})")
+
+            # Plot each membership function and overlay the fuzzification.
+            for label, mf in lv.ling_values.items():
+                mvf = MembershipFunctionViewer(mf, ax=ax, label=label)
+                mvf.fuzzify(crisp_value)
+            ax.legend()
+            plt.show()
+
+    def plot_rule_activations(self, input_sample, feature_names=None):
+        """
+        Compute and plot the activation levels for each rule for a given input sample.
+
+        Parameters:
+            input_sample: array-like, a single sample of crisp input values (e.g., X_test[sample_index]).
+            feature_names: (optional) list of feature names corresponding to the input sample.
+
+        This method computes rule activations using self.model_.computeRulesFireLevels,
+        matches them to self.rules_, and plots a bar chart showing each rule's activation level.
+        """
+
+        # Compute activations using the C++ wrapper.
+        activations = self.model_.computeRulesFireLevels(input_sample.tolist())
+        print(activations)
+
+        # Generate rule labels; if rules have names, you could use them.
+        rule_labels = [f"Rule {i+1}" for i in range(len(self.rules_))]
+
+        # Plot the activations as a bar chart.
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.bar(rule_labels, activations, color="skyblue")
+        ax.set_xlabel("Rules")
+        ax.set_ylabel("Activation Level")
+        ax.set_title("Rule Activations for the Input Sample")
+        ax.tick_params(axis="x", rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_aggregated_output(self, input_sample, feature_names=None):
+        """
+        Visualize the aggregated fuzzy output for a given input sample,
+        using a SingletonFIS to replicate the C++ singleton-based defuzzification.
+
+        Parameters:
+            input_sample: array-like, a single sample of crisp input values.
+            feature_names: Optional list of feature names corresponding to the input.
+        """
+        import numpy as np
+        from lfa_toolbox.core.fis.singleton_fis import SingletonFIS
+        from lfa_toolbox.view.fis_viewer import FISViewer
+
+        # Build a mapping for the input values.
+        if feature_names is not None:
+            input_dict = {
+                name: value for name, value in zip(feature_names, input_sample)
+            }
+        else:
+            input_dict = {
+                f"Feature_{i+1}": value for i, value in enumerate(input_sample)
+            }
+
+        # Retrieve the output linguistic variable from the model (assuming "OUT").
+        output_lv = next(
+            (lv for lv in self.variables_ if lv.name.upper() == "OUT"), None
+        )
+        if output_lv is None:
+            raise ValueError("Output linguistic variable 'OUT' not found.")
+
+        # Create a SingletonFIS instance using the learned rules and default rule.
+        fis = SingletonFIS(
+            rules=self.rules_,
+            default_rule=(self.default_rules_[0] if self.default_rules_ else None),
+        )
+
+        # Compute the prediction (crisp output) for the given input.
+        result = fis.predict(input_dict)
+
+        # Compare with the model's own prediction method (which uses the C++ engine) without rounding.
+        result_ = self._predict(input_sample)
+        print("Result (SingletonFIS):", result)
+        print("Result (C++ Model):", result_)
+
+        crisp_output = result.get("OUT")
+        print("Crisp Output (SingletonFIS):", crisp_output)
+
+        # Use FISViewer to display the system's aggregated fuzzy output.
+        fisv = FISViewer(fis, figsize=(12, 10))
+        fisv.show()
