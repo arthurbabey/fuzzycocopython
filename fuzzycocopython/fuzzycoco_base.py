@@ -99,10 +99,11 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshActivated = threshActivated
         self.verbose = verbose
 
-        self.logger = get_logger()
-        self.logger.activate(True)
-        self.logger.log("Hello from Python! Logging is now active.")
-        self.logger.flush()
+    def _set_logger(self):
+        self._logger = get_logger()
+        self._logger.activate(True)
+        self._logger.log("Hello from Python! Logging is now active.")
+        self._logger.flush()
 
     def _prepare_data(self, X, y=None, target_name="OUT"):
 

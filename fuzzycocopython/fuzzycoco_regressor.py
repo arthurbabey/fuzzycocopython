@@ -23,6 +23,9 @@ class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
         target_name: str = "OUT",
     ):
 
+        # Validate inputs
+        X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=True)
+
         # handl random state
         self._rng = check_random_state(self.random_state)
 
@@ -35,35 +38,30 @@ class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
             self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
         self.n_features_in_ = len(self.feature_names_in_)
 
-        # Validate inputs
-        X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=False)
-        self.classes_ = np.unique(y)
-
         cdf, combined = self._prepare_data(X, y, target_name)
 
         self._run_script(cdf, output_filename)
-        self.variables_, self.rules_, self.default_rules = parse_fuzzy_system(
+        self.variables_, self.rules_, self.default_rules_ = parse_fuzzy_system(
             output_filename
         )
         return self
 
     def predict(self, X, feature_names: list = None):
         check_is_fitted(self, ["model_", "feature_names_in_", "n_features_in_"])
-        X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
+        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=True)
         if X.shape[1] != self.n_features_in_:
             raise ValueError(
-                f"X has {X.shape[1]} features, but this model was trained with {self.n_features_in_} features."
+                f"X has {X.shape[1]} features, "
+                f"but this {self.__class__.__name__} is expecting {self.n_features_in_} features as input."
             )
+
         cdf, _ = self._prepare_data(X, None, feature_names)
         predictions = self.model_.smartPredict(cdf)
         predictions_list = predictions.to_list()
 
-        # Convert predictions to floats
-        result = [float(row[0]) for row in predictions_list]
-        if isinstance(X, pd.DataFrame):
-            return pd.Series(result, index=X.index)
-        else:
-            return np.array(result)
+        # Convert predictions to 1D array of shape (n_samples,)
+        result = np.array([float(row[0]) for row in predictions_list])
+        return result
 
     def score(self, X, y, feature_names: list = None, target_name: str = "OUT"):
         check_is_fitted(self, ["model_", "feature_names_in_", "n_features_in_"])
