@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -53,7 +55,6 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self.variables_, self.rules_, self.default_rules_ = (
             parse_fuzzy_system_from_model(self.model_)
         )
-        self._set_logger()
         self._logger.flush()
 
         if store_fitness_curve:
@@ -67,6 +68,8 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
                         self.fitness_curve_ = [float(val) for val in parts]
                     else:
                         self.fitness_curve_ = []
+
+                    os.remove(log_file)
             except Exception as e:
                 self.fitness_curve_ = []
                 print(f"Error reading fitness curve from {log_file}: {e}")
@@ -95,7 +98,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
 
     def predict(self, X):
         check_is_fitted(self, ["model_", "feature_names_in_", "n_features_in_"])
-        X = check_array(X, dtype=float, force_all_finite=True, ensure_2d=True)
+        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=True)
         if X.shape[1] != self.n_features_in_:
             raise ValueError(
                 f"X has {X.shape[1]} features, "
@@ -132,21 +135,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         all_rule_activations = []
         for row in X_arr:
             activations = self.model_.computeRulesFireLevels(row.tolist())
-            sample_activations = []
-            for rule_obj, act in zip(self.rules_, activations):
-                rule_dict = {
-                    "antecedents": [
-                        {"var_name": ant.lv_name.name, "set_name": ant.lv_value}
-                        for ant in rule_obj.antecedents
-                    ],
-                    "consequents": [
-                        {"var_name": cons.lv_name.name, "set_name": cons.lv_value}
-                        for cons in rule_obj.consequents
-                    ],
-                    "activation": act,
-                }
-                sample_activations.append(rule_dict)
-            all_rule_activations.append(sample_activations)
+            all_rule_activations.append(activations)
         if single_sample:
             return y_pred[0], all_rule_activations[0]
         return y_pred, all_rule_activations

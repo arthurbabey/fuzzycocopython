@@ -98,6 +98,8 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshold = threshold
         self.threshActivated = threshActivated
         self.verbose = verbose
+        # activate logger which is stored outside of state
+        self._set_logger()
 
     def _set_logger(self):
         self._logger = get_logger()
