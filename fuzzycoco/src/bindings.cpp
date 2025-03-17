@@ -110,28 +110,128 @@ PYBIND11_MODULE(fuzzycoco_core, m) {
     //  Bind FuzzySystem
     // ==========================
     py::class_<FuzzySystem>(m, "FuzzySystem")
-        .def_static("load", &FuzzySystem::load, "Load a FuzzySystem from a NamedList")
-        .def("smartPredict", &FuzzySystem::smartPredict, "Perform a smart prediction")
-        .def("computeRulesFireLevels",
-             [](FuzzySystem &self, const std::vector<double> &input_values) {
-                 return self.computeRulesFireLevels(input_values);  // Use correct function signature
-             },
-             "Compute and return the firing strengths of each rule.")
-        .def("computeRulesImplications",
-             [](FuzzySystem &self, const std::vector<double> &rule_fire_levels) {
-                 Matrix<double> results(rule_fire_levels.size(), self.getNbRules());
-                 self.computeRulesImplications(rule_fire_levels, results);
+    .def_static("load", &FuzzySystem::load, "Load a FuzzySystem from a NamedList")
+    .def("smartPredict", &FuzzySystem::smartPredict, "Perform a smart prediction")
+    .def(
+        "computeRulesFireLevels",
+        [](FuzzySystem &self, const std::vector<double> &input_values) {
+            return self.computeRulesFireLevels(input_values);
+        },
+        "Compute and return the firing strengths of each rule."
+    )
+    .def(
+        "computeRulesImplications",
+        [](FuzzySystem &self, const std::vector<double> &rule_fire_levels) {
+            Matrix<double> results(rule_fire_levels.size(), self.getNbRules());
+            self.computeRulesImplications(rule_fire_levels, results);
 
-                 // Convert Matrix to Python list of lists
-                 std::vector<std::vector<double>> output;
-                 for (int i = 0; i < results.nbrows(); i++) {
-                     std::vector<double> row;
-                     for (int j = 0; j < results.nbcols(); j++) {
-                         row.push_back(results[i][j]);  // Access elements correctly
-                     }
-                     output.push_back(row);
-                 }
-                 return output;
-             },
-             "Compute implications from rule fire levels and return them as a nested list.");
+            // Convert Matrix to Python list of lists
+            std::vector<std::vector<double>> output;
+            output.reserve(results.nbrows());
+            for (int i = 0; i < results.nbrows(); i++) {
+                std::vector<double> row;
+                row.reserve(results.nbcols());
+                for (int j = 0; j < results.nbcols(); j++) {
+                    row.push_back(results[i][j]);
+                }
+                output.push_back(std::move(row));
+            }
+            return output;
+        },
+        "Compute implications from rule fire levels and return them as a nested list."
+    )
+        // --- Expose rules via a lambda ---
+        .def("get_rules", [](FuzzySystem &fs) -> py::list {
+            py::list rules;
+            int nb_rules = fs.getNbRules();
+            // Process normal rules:
+            auto inputConds = fs.getInputRulesConditions();
+            auto outputConds = fs.getOutputRulesConditions();
+            for (int i = 0; i < nb_rules; i++) {
+                FuzzyRule rule(fs.getDB());
+                rule.setConditions(inputConds[i], outputConds[i]);
+                NamedList ruleDesc = rule.describe();
+                py::dict d;
+                py::list antecedents;
+                for (auto &ant : ruleDesc.get_list("antecedents")) {
+                    py::dict ant_d;
+                    ant_d["var_name"]   = ant->get_string("var_name");
+                    ant_d["set_name"]   = ant->get_string("set_name");
+                    antecedents.append(ant_d);
+                }
+                d["antecedents"] = antecedents;
+                py::list consequents;
+                for (auto &con : ruleDesc.get_list("consequents")) {
+                    py::dict con_d;
+                    con_d["var_name"]   = con->get_string("var_name");
+                    con_d["set_name"]   = con->get_string("set_name");
+                    consequents.append(con_d);
+                }
+                d["consequents"] = consequents;
+                rules.append(d);
+            }
+            // Append default rules:
+            auto defRules = fs.getDefaultRulesOutputSets();
+            int nb_out = fs.getDB().getNbOutputVars();
+            for (int var_idx = 0; var_idx < nb_out; var_idx++) {
+                py::dict d;
+                d["antecedents"] = py::list(); // Empty antecedents
+                py::list consequents;
+                py::dict con_d;
+                auto outVar = fs.getDB().getOutputVariable(var_idx);
+                con_d["var_name"] = outVar.getName();
+                int set_idx = defRules[var_idx];
+                auto set_ptr = outVar.getSet(set_idx);
+                NamedList setDesc = set_ptr->describe();
+                con_d["set_name"]   = setDesc.get_string("name");
+                consequents.append(con_d);
+                d["consequents"] = consequents;
+                rules.append(d);
+            }
+            return rules;
+        }, "Return the fuzzy system rules as a list of dictionaries.")
+
+    .def("get_input_variables", [](FuzzySystem &fs) -> std::vector<py::dict> {
+        std::vector<py::dict> result;
+        int nb = fs.getDB().getNbInputVars();
+        for (int i = 0; i < nb; i++) {
+            auto var = fs.getDB().getInputVariable(i);
+            py::dict d;
+            d["name"] = var.getName();
+            std::vector<py::dict> sets;
+            // Use getSets() from your variable, assuming it returns a vector<FuzzySet>
+            for (const auto &s : var.getSets()) {
+                py::dict sd;
+                NamedList desc = s.describe();
+                sd["name"] = desc.get_string("name");
+                sd["position"] = desc.get_double("position");
+                sets.push_back(sd);
+            }
+            d["sets"] = sets;
+            result.push_back(d);
+        }
+        return result;
+    }, "Return a list of input variables (with their name and sets) as dictionaries.")
+
+    .def("get_output_variables", [](FuzzySystem &fs) -> std::vector<py::dict> {
+        std::vector<py::dict> result;
+        int nb = fs.getDB().getNbOutputVars();
+        for (int i = 0; i < nb; i++) {
+            auto var = fs.getDB().getOutputVariable(i);
+            py::dict d;
+            d["name"] = var.getName();
+            std::vector<py::dict> sets;
+            for (const auto &s : var.getSets()) {
+                py::dict sd;
+                NamedList desc = s.describe();
+                sd["name"] = desc.get_string("name");
+                sd["position"] = desc.get_double("position");
+                sets.push_back(sd);
+            }
+            d["sets"] = sets;
+            result.push_back(d);
+        }
+        return result;
+    }, "Return a list of output variables (with their name and sets) as dictionaries.");
+
 }

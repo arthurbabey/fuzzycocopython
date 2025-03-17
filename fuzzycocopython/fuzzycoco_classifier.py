@@ -14,7 +14,7 @@ from sklearn.utils.validation import (
 
 from .fuzzycoco_base import FuzzyCocoBase
 from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
-from .utils import parse_fuzzy_system
+from .utils import parse_fuzzy_system_from_model
 
 
 class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
@@ -49,8 +49,9 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
 
         cdf, combined = self._prepare_data(X, y, target_name)
         self._run_script(cdf, output_filename)
-        self.variables_, self.rules_, self.default_rules_ = parse_fuzzy_system(
-            output_filename
+
+        self.variables_, self.rules_, self.default_rules_ = (
+            parse_fuzzy_system_from_model(self.model_)
         )
         self._set_logger()
         self._logger.flush()

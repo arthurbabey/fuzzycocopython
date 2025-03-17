@@ -15,173 +15,176 @@ from lfa_toolbox.core.rules.fuzzy_rule import FuzzyRule
 from lfa_toolbox.core.rules.fuzzy_rule_element import Antecedent, Consequent
 
 
-def parse_fuzzy_system(ffs_file):
+def create_input_linguistic_variable(var_name, set_items):
+    set_items = sorted(set_items, key=lambda s: s.get("position", 0))
+    n = len(set_items)
+    ling_values_dict = {}
+    for i, s in enumerate(set_items):
+        pos = s.get("position")
+        # We ignore the original "name" and use the provided generic label.
+        set_name = s.get("name")
+        if n == 1:
+            mf = LeftShoulderMF(pos, pos + 1)
+        elif n == 2:
+            if i == 0:
+                mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
+            else:
+                mf = RightShoulderMF(set_items[i - 1]["position"], pos)
+        else:
+            if i == 0:
+                mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
+            elif i == n - 1:
+                mf = RightShoulderMF(set_items[i - 1]["position"], pos)
+            else:
+                mf = TriangularMF(
+                    set_items[i - 1]["position"], pos, set_items[i + 1]["position"]
+                )
+        ling_values_dict[set_name] = mf
+    return LinguisticVariable(var_name, ling_values_dict)
+
+
+def create_output_linguistic_variable(var_name, set_items):
+    set_items = sorted(set_items, key=lambda s: s.get("position", 0))
+    ling_values_dict = {}
+    for s in set_items:
+        pos = s.get("position")
+        set_name = s.get("name")
+        mf = SingletonMF(pos)
+        ling_values_dict[set_name] = mf
+    return LinguisticVariable(var_name, ling_values_dict)
+
+
+def generate_generic_labels(n):
+    match n:
+        case 1:
+            return ["Medium"]
+        case 2:
+            return ["Low", "High"]
+        case 3:
+            return ["Low", "Medium", "High"]
+        case 4:
+            return ["Very Low", "Low", "High", "Very High"]
+        case 5:
+            return ["Very Low", "Low", "Medium", "High", "Very High"]
+        case 6:
+            return [
+                "Very Low",
+                "Low",
+                "Slightly Low",
+                "Slightly High",
+                "High",
+                "Very High",
+            ]
+        case 7:
+            return [
+                "Very Low",
+                "Low",
+                "Slightly Low",
+                "Medium",
+                "Slightly High",
+                "High",
+                "Very High",
+            ]
+        case _:
+            return [f"Set {i+1}" for i in range(n)]
+
+
+# --- Main helper that parses the fuzzy system from your model ---
+
+
+def parse_fuzzy_system_from_model(model):
     """
-    Parse a fuzzy system file (JSON format) to extract:
+    Given a fuzzy system model (with methods:
+       - get_input_variables()
+       - get_output_variables()
+       - get_rules()
+    ),
+    parse the fuzzy system and build:
       - a list of LinguisticVariable objects,
       - a list of FuzzyRule objects,
       - a list of DefaultFuzzyRule objects.
 
-    For INPUT variables, membership functions are built as follows:
-      - If there is only one set: use a LeftShoulderMF from pos to pos+1.
-      - If there are two sets: the first is LeftShoulderMF and the second is RightShoulderMF.
-      - If more than two sets: use LeftShoulderMF for the first, RightShoulderMF for the last,
-        and TriangularMF for the intermediate sets.
-
-    For OUTPUT variables, membership functions are built as Singletons.
-
-    The antecedent activation function and the implication function are fixed to 'min'
-    (equivalent to FIS.AND_min).
-
-    :param ffs_file: Either a file path to the fuzzy system file or a JSON string.
-    :return: (linguistic_variables, fuzzy_rules, default_rules)
+    For both input and output variables, the membership set names are replaced with generic labels
+    (e.g., "Low"/"High" for 2 sets, "Low"/"Medium"/"High" for 3 sets, etc.).
+    The rules are updated to use these generic labels.
     """
-
-    def object_pairs_hook_with_duplicates(pairs):
-        d = {}
-        for key, value in pairs:
-            if key in d:
-                if isinstance(d[key], list):
-                    d[key].append(value)
-                else:
-                    d[key] = [d[key], value]
-            else:
-                d[key] = value
-        return d
-
-    def create_input_linguistic_variable(var_name, set_items):
-        set_items = sorted(set_items, key=lambda s: s.get("position", 0))
-        n = len(set_items)
-        ling_values_dict = {}
-
-        for i, s in enumerate(set_items):
-            pos = s.get("position")
-            set_name = s.get("name")
-
-            if n == 1:
-                mf = LeftShoulderMF(pos, pos + 1)
-            elif n == 2:
-                if i == 0:
-                    mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
-                else:
-                    mf = RightShoulderMF(set_items[i - 1]["position"], pos)
-            else:
-                if i == 0:
-                    mf = LeftShoulderMF(pos, set_items[i + 1]["position"])
-                elif i == n - 1:
-                    mf = RightShoulderMF(set_items[i - 1]["position"], pos)
-                else:
-                    mf = TriangularMF(
-                        set_items[i - 1]["position"], pos, set_items[i + 1]["position"]
-                    )
-
-            ling_values_dict[set_name] = mf
-
-        return LinguisticVariable(var_name, ling_values_dict)
-
-    def create_output_linguistic_variable(var_name, set_items):
-        """
-        Build membership functions for output variables as singletons.
-        """
-        set_items = sorted(set_items, key=lambda s: s.get("position", 0))
-        ling_values_dict = {}
-        for s in set_items:
-            pos = s.get("position")
-            set_name = s.get("name")
-            mf = SingletonMF(pos)
-            ling_values_dict[set_name] = mf
-        return LinguisticVariable(var_name, ling_values_dict)
-
-    # Load JSON
-    if isinstance(ffs_file, str):
-        if os.path.isfile(ffs_file):
-            with open(ffs_file, "r") as f:
-                data = json.load(f, object_pairs_hook=object_pairs_hook_with_duplicates)
-        else:
-            data = json.loads(
-                ffs_file, object_pairs_hook=object_pairs_hook_with_duplicates
-            )
-    else:
-        data = ffs_file
-
-    fuzzy_sys = data.get("fuzzy_system", {})
-    variables_section = fuzzy_sys.get("variables", {})
     linguistic_variables = []
-    lv_dict = {}
+    lv_dict = {}  # key: variable name, value: LinguisticVariable object
+    label_mapping = {}  # key: variable name, value: {original_set_name: generic_label}
 
-    for var_type in ["input", "output"]:
-        for var_key, var_data in variables_section.get(var_type, {}).items():
-            var_name = var_data.get("name", var_key)
-            sets_data = var_data.get("Sets")
-            if not sets_data:
-                continue
-            set_items = sets_data.get("Set")
-            if not isinstance(set_items, list):
-                set_items = [set_items]
+    # --- Process input variables ---
+    in_vars = (
+        model.get_input_variables()
+    )  # e.g., [{'name': 'Feature_3', 'sets': [...]}, ...]
+    for var in in_vars:
+        var_name = var["name"]
+        sets = var["sets"]
+        generic_labels = generate_generic_labels(len(sets))
+        mapping = {}
+        new_sets = []
+        for label, s in zip(generic_labels, sets):
+            orig = s.get("name")
+            mapping[orig] = label
+            new_s = dict(s)  # copy the original set dictionary
+            new_s["name"] = label
+            new_sets.append(new_s)
+        label_mapping[var_name] = mapping
+        lv = create_input_linguistic_variable(var_name, new_sets)
+        linguistic_variables.append(lv)
+        lv_dict[var_name] = lv
 
-            if var_type == "input":
-                lv = create_input_linguistic_variable(var_name, set_items)
-            else:  # "output"
-                lv = create_output_linguistic_variable(var_name, set_items)
+    # --- Process output variables ---
+    out_vars = model.get_output_variables()
+    for var in out_vars:
+        var_name = var["name"]
+        sets = var["sets"]
+        # Optionally, you may also want generic labels for output variables.
+        generic_labels = generate_generic_labels(len(sets))
+        mapping = {}
+        new_sets = []
+        for label, s in zip(generic_labels, sets):
+            orig = s.get("name")
+            mapping[orig] = label
+            new_s = dict(s)
+            new_s["name"] = label
+            new_sets.append(new_s)
+        label_mapping[var_name] = mapping
+        lv = create_output_linguistic_variable(var_name, new_sets)
+        linguistic_variables.append(lv)
+        lv_dict[var_name] = lv
 
-            linguistic_variables.append(lv)
-            lv_dict[var_name] = lv
-
+    # --- Process rules ---
     fixed_act_func = (np.min, "AND_min")
     fixed_impl_func = (np.min, "AND_min")
-
     fuzzy_rules = []
-    rules_section = fuzzy_sys.get("rules", {})
-    for rule_name, rule in rules_section.items():
-        antecedents_raw = rule.get("antecedents", {}).get("antecedent", {})
-        if isinstance(antecedents_raw, list):
-            antecedents_list = antecedents_raw
-        else:
-            antecedents_list = [antecedents_raw]
-
-        consequents_raw = rule.get("consequents", {}).get("consequent", {})
-        if isinstance(consequents_raw, list):
-            consequents_list = consequents_raw
-        else:
-            consequents_list = [consequents_raw]
-
-        ants = []
-        for ant_data in antecedents_list:
-            var_key = ant_data.get("var_name")
-            lv = lv_dict.get(var_key, var_key)
-            ants.append(
-                Antecedent(
-                    lv_name=lv,
-                    lv_value=ant_data.get("set_name"),
-                    is_not=False,
-                )
-            )
-
-        cons = []
-        for cons_data in consequents_list:
-            var_key = cons_data.get("var_name")
-            lv = lv_dict.get(var_key, var_key)
-            cons.append(
-                Consequent(
-                    lv_name=lv,
-                    lv_value=cons_data.get("set_name"),
-                )
-            )
-
-        frule = FuzzyRule(ants, fixed_act_func, cons, fixed_impl_func)
-        fuzzy_rules.append(frule)
-
     default_rules = []
-    default_rules_section = fuzzy_sys.get("default_rules", {})
-    for rule_name, rule in default_rules_section.items():
-        var_key = rule.get("var_name")
-        lv = lv_dict.get(var_key, var_key)
-        cons = Consequent(
-            lv_name=lv,
-            lv_value=rule.get("set_name"),
-        )
-        dfrule = DefaultFuzzyRule([cons], fixed_impl_func)
-        default_rules.append(dfrule)
+    rules_data = (
+        model.get_rules()
+    )  # e.g., list of dicts with keys "antecedents" and "consequents"
+    for rule in rules_data:
+        ants_data = rule.get("antecedents", [])
+        cons_data = rule.get("consequents", [])
+        ants = []
+        cons = []
+        for ant in ants_data:
+            var_name = ant["var_name"]
+            orig_set = ant["set_name"]
+            # Substitute with the generic label if available:
+            set_name = label_mapping.get(var_name, {}).get(orig_set, orig_set)
+            lv = lv_dict.get(var_name)
+            if lv is not None:
+                ants.append(Antecedent(lv, set_name, is_not=False))
+        for con in cons_data:
+            var_name = con["var_name"]
+            orig_set = con["set_name"]
+            set_name = label_mapping.get(var_name, {}).get(orig_set, orig_set)
+            lv = lv_dict.get(var_name)
+            if lv is not None:
+                cons.append(Consequent(lv, set_name))
+        if ants:
+            fuzzy_rules.append(FuzzyRule(ants, fixed_act_func, cons, fixed_impl_func))
+        else:
+            default_rules.append(DefaultFuzzyRule(cons, fixed_impl_func))
 
     return linguistic_variables, fuzzy_rules, default_rules
 

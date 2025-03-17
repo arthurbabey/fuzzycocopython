@@ -10,7 +10,7 @@ from sklearn.utils.validation import (
 )
 
 from .fuzzycoco_base import FuzzyCocoBase
-from .utils import parse_fuzzy_system
+from .utils import parse_fuzzy_system_from_model
 
 
 class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
@@ -41,9 +41,10 @@ class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
         cdf, combined = self._prepare_data(X, y, target_name)
 
         self._run_script(cdf, output_filename)
-        self.variables_, self.rules_, self.default_rules_ = parse_fuzzy_system(
-            output_filename
+        self.variables_, self.rules_, self.default_rules_ = (
+            parse_fuzzy_system_from_model(self.model_)
         )
+
         return self
 
     def predict(self, X, feature_names: list = None):

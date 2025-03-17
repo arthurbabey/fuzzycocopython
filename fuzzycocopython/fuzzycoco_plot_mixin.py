@@ -1,4 +1,7 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from lfa_toolbox.core.fis.singleton_fis import SingletonFIS
+from lfa_toolbox.view.fis_viewer import FISViewer
 from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.utils.validation import check_is_fitted
 
@@ -71,33 +74,55 @@ class FuzzyCocoPlotMixin:
 
     def plot_rule_activations(self, input_sample, feature_names=None):
         """
-        Compute and plot the activation levels for each rule for a given input sample.
+        Compute and plot the activation levels for each fuzzy rule for a given input sample.
 
         Parameters
         ----------
         input_sample : array-like
             A single sample of crisp input values (e.g., X_test[sample_index]).
         feature_names : list of str, optional
-            Names corresponding to the input sample.
+            Names corresponding to the input features (not used in this plot).
         """
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from sklearn.utils.validation import check_is_fitted
+
+        # Check if required attributes are fitted
         check_is_fitted(self, ["rules_", "model_"])
 
-        # If needed, reshape single-sample input:
+        # Ensure the input sample is 2D (one row)
         if hasattr(input_sample, "shape") and len(input_sample.shape) == 1:
             input_sample = input_sample.reshape(1, -1)
 
-        # Compute rule activations using your underlying C++ engine.
+        # Compute rule activations using the underlying C++ engine
         activations = self.model_.computeRulesFireLevels(input_sample.tolist()[0])
+        # Ensure activations are floats for plotting
+        activations = [float(a) for a in activations]
 
+        # Generate labels: "Rule 1", "Rule 2", etc.
         rule_labels = [f"Rule {i+1}" for i in range(len(self.rules_))]
 
-        # Plot the activations as a bar chart.
+        # Create a bar chart for rule activations
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.bar(rule_labels, activations)
-        ax.set_xlabel("Rules")
-        ax.set_ylabel("Activation Level")
-        ax.set_title("Rule Activations for the Input Sample")
+        bars = ax.bar(rule_labels, activations, color="skyblue", edgecolor="black")
+        ax.set_xlabel("Rules", fontsize=12)
+        ax.set_ylabel("Activation Level", fontsize=12)
+        ax.set_title("Rule Activations for the Input Sample", fontsize=14)
         ax.tick_params(axis="x", rotation=45)
+
+        # Annotate each bar with its activation value
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate(
+                f"{height:.2f}",
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3),  # vertical offset
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=10,
+            )
+
         plt.tight_layout()
         plt.show()
 
@@ -113,21 +138,16 @@ class FuzzyCocoPlotMixin:
         feature_names : list of str, optional
             Names corresponding to the input features.
         """
-        import numpy as np
-        from lfa_toolbox.core.fis.singleton_fis import SingletonFIS
-        from lfa_toolbox.view.fis_viewer import FISViewer
 
-        check_is_fitted(self, ["rules_", "variables_", "default_rules_", "model_"])
+        check_is_fitted(
+            self,
+            ["rules_", "variables_", "default_rules_", "model_", "feature_names_in_"],
+        )
 
         # Build a mapping for the input values.
-        if feature_names is not None:
-            input_dict = {
-                name: value for name, value in zip(feature_names, input_sample)
-            }
-        else:
-            input_dict = {
-                f"Feature_{i+1}": value for i, value in enumerate(input_sample)
-            }
+        input_dict = {
+            name: value for name, value in zip(self.feature_names_in_, input_sample)
+        }
 
         # Retrieve the output linguistic variable (assuming "OUT").
         output_lv = next(
@@ -144,12 +164,13 @@ class FuzzyCocoPlotMixin:
             default_rule=(self.default_rules_[0] if self.default_rules_ else None),
         )
 
-        # Compute the prediction (crisp output) for the given input.
         result = fis.predict(input_dict)
+        result_cpp = self._predict(input_sample)
 
-        # Compare with the model's own prediction method (C++ engine) for debugging purposes.
-        # NOTE: This assumes you have a method self._predict(...)
-        result_ = self._predict(input_sample)
+        if not np.isclose(float(result.get("OUT")), float(result_cpp[0])):
+            raise ValueError(
+                f"Python and C++ defuzzification results do not match: {result} vs. {result_cpp}"
+            )
 
         # Show the aggregated fuzzy output via FISViewer.
         fisv = FISViewer(fis, figsize=(12, 10))
