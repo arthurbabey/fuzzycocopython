@@ -4,7 +4,12 @@ import pandas as pd
 from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_random_state,
+    check_X_y,
+)
 
 from .fuzzycoco_base import FuzzyCocoBase
 from .utils import parse_fuzzy_system
@@ -20,30 +25,24 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
         target_name: str = "OUT",
         store_fitness_curve: bool = False,
     ):
+
+        # handl random state
+        self._rng = check_random_state(self.random_state)
+
         # Handle feature names from DataFrame or parameter
         if isinstance(X, pd.DataFrame):
             self.feature_names_in_ = X.columns.tolist()
-            print(f"Feature names: {self.feature_names_in_}")
         elif feature_names is not None:
             self.feature_names_in_ = feature_names
+        else:
+            self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
+        self.n_features_in_ = len(self.feature_names_in_)
 
         # Validate inputs
-        X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
-        y = check_array(y, ensure_2d=False, dtype="numeric", ensure_all_finite=False)
-
-        if not hasattr(self, "feature_names_in_"):
-            self.feature_names_in_ = (
-                feature_names
-                if feature_names is not None
-                else [f"Feature_{i+1}" for i in range(X.shape[1])]
-            )
-
+        X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=False)
         self.classes_ = np.unique(y)
-        cdf, combined = self._prepare_data(X, y, self.feature_names_in_, target_name)
-        self.n_features_in_ = (
-            len(self.feature_names_in_) if y is not None else len(combined.columns)
-        )
 
+        cdf, combined = self._prepare_data(X, y, target_name)
         self._run_script(cdf, output_filename)
         self.variables_, self.rules_, self.default_rules_ = parse_fuzzy_system(
             output_filename
@@ -216,7 +215,6 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
 
         # Compute activations using the C++ wrapper.
         activations = self.model_.computeRulesFireLevels(input_sample.tolist())
-        print(activations)
 
         # Generate rule labels; if rules have names, you could use them.
         rule_labels = [f"Rule {i+1}" for i in range(len(self.rules_))]
@@ -272,11 +270,7 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoBase):
 
         # Compare with the model's own prediction method (which uses the C++ engine) without rounding.
         result_ = self._predict(input_sample)
-        print("Result (SingletonFIS):", result)
-        print("Result (C++ Model):", result_)
-
         crisp_output = result.get("OUT")
-        print("Crisp Output (SingletonFIS):", crisp_output)
 
         # Use FISViewer to display the system's aggregated fuzzy output.
         fisv = FISViewer(fis, figsize=(12, 10))

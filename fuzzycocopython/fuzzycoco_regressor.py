@@ -2,7 +2,12 @@ import numpy as np
 import pandas as pd
 from sklearn.base import RegressorMixin
 from sklearn.metrics import r2_score
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_random_state,
+    check_X_y,
+)
 
 from .fuzzycoco_base import FuzzyCocoBase
 from .utils import parse_fuzzy_system
@@ -17,16 +22,24 @@ class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoBase):
         feature_names: list = None,
         target_name: str = "OUT",
     ):
-        X = check_array(X, ensure_2d=True, dtype="numeric", ensure_all_finite=False)
-        y = check_array(y, ensure_2d=False, dtype="numeric", ensure_all_finite=False)
-        cdf, combined = self._prepare_data(X, y, feature_names, target_name)
-        # Set attributes after data is known
-        if y is not None:
-            self.feature_names_in_ = combined.columns[:-1].tolist()
-            self.n_features_in_ = len(self.feature_names_in_)
+
+        # handl random state
+        self._rng = check_random_state(self.random_state)
+
+        # Handle feature names from DataFrame or parameter
+        if isinstance(X, pd.DataFrame):
+            self.feature_names_in_ = X.columns.tolist()
+        elif feature_names is not None:
+            self.feature_names_in_ = feature_names
         else:
-            self.feature_names_in_ = combined.columns.tolist()
-            self.n_features_in_ = len(self.feature_names_in_)
+            self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
+        self.n_features_in_ = len(self.feature_names_in_)
+
+        # Validate inputs
+        X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=False)
+        self.classes_ = np.unique(y)
+
+        cdf, combined = self._prepare_data(X, y, target_name)
 
         self._run_script(cdf, output_filename)
         self.variables_, self.rules_, self.default_rules = parse_fuzzy_system(

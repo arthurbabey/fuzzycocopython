@@ -24,7 +24,7 @@ def test_classifier_with_numpy_no_names(tmp_path):
     X = np.random.rand(20, 3)
     y = np.random.randint(0, 2, size=20)
     output_filename = tmp_path / "fuzzySystem.ffs"
-    model = FuzzyCocoClassifier(random_state=123)  # No feature_names, no target_name
+    model = FuzzyCocoClassifier(random_state=123)
     model.fit(X, y, output_filename=str(output_filename))
     preds = model.predict(X)
     score = model.score(X, y)
@@ -47,8 +47,8 @@ def test_classifier_with_numpy_with_names(tmp_path):
         target_name="Class",
         output_filename=str(output_filename),
     )
-    preds = model.predict(X, feature_names=feature_names)
-    score = model.score(X, y, feature_names=feature_names, target_name="Class")
+    preds = model.predict(X)
+    score = model.score(X, y, target_name="Class")
 
     assert len(preds) == len(y)
     assert 0.0 <= score <= 1.0
@@ -94,8 +94,8 @@ def test_regressor_with_numpy_with_names(tmp_path):
         target_name="Y",
         output_filename=str(output_filename),
     )
-    preds = model.predict(X, feature_names=feature_names)
-    score = model.score(X, y, feature_names=feature_names, target_name="Y")
+    preds = model.predict(X)
+    score = model.score(X, y, target_name="Y")
 
     assert len(preds) == 20
     assert isinstance(score, float)

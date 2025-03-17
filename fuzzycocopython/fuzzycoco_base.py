@@ -1,10 +1,7 @@
 import os
-import random
-import subprocess
 
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_array
 
 from .fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -107,17 +104,11 @@ class FuzzyCocoBase(BaseEstimator):
         self.logger.log("Hello from Python! Logging is now active.")
         self.logger.flush()
 
-    def _prepare_data(self, X, y=None, feature_names=None, target_name="OUT"):
-        # If no feature_names are provided here, fallback to self.feature_names_in_ if it exists
-        if feature_names is None and hasattr(self, "feature_names_in_"):
-            feature_names = self.feature_names_in_
+    def _prepare_data(self, X, y=None, target_name="OUT"):
 
         # Convert X to DataFrame if not already
         if not isinstance(X, pd.DataFrame):
-            X = check_array(X, ensure_2d=True)
-            if feature_names is None:
-                feature_names = [f"Feature_{i+1}" for i in range(X.shape[1])]
-            X = pd.DataFrame(X, columns=feature_names)
+            X = pd.DataFrame(X, columns=self.feature_names_in_)
 
         # Combine X and y if y is provided
         if y is not None:
@@ -140,11 +131,7 @@ class FuzzyCocoBase(BaseEstimator):
         script = slurp(generated_file)
         os.remove(generated_file)
 
-        seed = (
-            self.random_state
-            if self.random_state is not None
-            else random.randint(0, 1000000)
-        )
+        seed = self._rng.randint(0, 1e6)
         runner = CocoScriptRunnerMethod(cdf, seed, output_filename)
         scripter = FuzzyCocoScriptRunner(runner)
 
