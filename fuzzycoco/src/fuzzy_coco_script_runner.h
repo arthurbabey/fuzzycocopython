@@ -16,6 +16,7 @@
 using namespace std;
 
 #include "fuzzy_coco_params.h"
+#include "fuzzy_coco.h"
 
 struct ScriptParams {
   FuzzyCocoParams coco;
@@ -31,6 +32,23 @@ class ScriptRunnerMethod {
 public:
   virtual void run(const ScriptParams& params) = 0;
 };
+
+// ARTHUR: move CocoScriptRunnerMethod from exec to here to expose it in python, and add a getter for the fitness history
+class CocoScriptRunnerMethod : public ScriptRunnerMethod {
+  public:
+      CocoScriptRunnerMethod(const DataFrame& df, int seed, const std::string& output_filename);
+      void run(const ScriptParams& params) override;
+
+      // ARTHUR: Getter to retrieve the fitness history from the trained FuzzyCoco instance.
+      const std::vector<double>& getFitnessHistory() const;
+
+  private:
+      const DataFrame& _df;
+      int _seed;
+      std::string _output_filename;
+      // NEW: This member will store the FuzzyCoco instance after training.
+      std::unique_ptr<FuzzyCoco> _fuzzyCoco;
+  };
 
 class FuzzyCocoScriptRunner
 {

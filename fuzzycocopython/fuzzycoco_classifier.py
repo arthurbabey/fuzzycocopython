@@ -27,7 +27,6 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         output_filename: str = "./fuzzySystem.ffs",
         feature_names: list = None,
         target_name: str = "OUT",
-        store_fitness_curve: bool = False,
     ):
 
         # Validate inputs
@@ -55,24 +54,6 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self.variables_, self.rules_, self.default_rules_ = (
             parse_fuzzy_system_from_model(self.model_)
         )
-        self._logger.flush()
-
-        if store_fitness_curve:
-            log_file = ".log.txt"
-            try:
-                with open(log_file, "r") as f:
-                    lines = f.read().strip().splitlines()
-                    if lines:
-                        last_line = lines[-1]
-                        parts = [s.strip() for s in last_line.split(",") if s.strip()]
-                        self.fitness_curve_ = [float(val) for val in parts]
-                    else:
-                        self.fitness_curve_ = []
-
-                    os.remove(log_file)
-            except Exception as e:
-                self.fitness_curve_ = []
-                print(f"Error reading fitness curve from {log_file}: {e}")
 
         return self
 
@@ -98,11 +79,15 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
 
     def predict(self, X):
         check_is_fitted(self, ["model_", "feature_names_in_", "n_features_in_"])
-        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=True)
+        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=False)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+
+        # Verify the number of features matches
         if X.shape[1] != self.n_features_in_:
             raise ValueError(
                 f"X has {X.shape[1]} features, "
-                f"but this {self.__class__.__name__} is expecting {self.n_features_in_} features as input."
+                f"but this {self.__class__.__name__} was fitted with {self.n_features_in_} features."
             )
         raw_vals = self._predict(X, self.feature_names_in_)
         y_pred = np.array([round(val) for val in raw_vals])  # Standard rounding

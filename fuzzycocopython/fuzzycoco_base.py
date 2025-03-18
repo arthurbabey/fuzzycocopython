@@ -9,7 +9,6 @@ from .fuzzycoco_core import (
     FuzzyCocoScriptRunner,
     FuzzySystem,
     NamedList,
-    get_logger,
     slurp,
 )
 from .utils import generate_fs_file
@@ -98,14 +97,6 @@ class FuzzyCocoBase(BaseEstimator):
         self.threshold = threshold
         self.threshActivated = threshActivated
         self.verbose = verbose
-        # activate logger which is stored outside of state
-        self._set_logger()
-
-    def _set_logger(self):
-        self._logger = get_logger()
-        self._logger.activate(True)
-        self._logger.log("Hello from Python! Logging is now active.")
-        self._logger.flush()
 
     def _prepare_data(self, X, y=None, target_name="OUT"):
 
@@ -141,6 +132,7 @@ class FuzzyCocoBase(BaseEstimator):
         # Run the script
         scripter.evalScriptCode(script)
 
+        self.fitness_history_ = runner.get_fitness_history()
         self.model_ = self._load(output_filename)
 
     def _generate_fs_files(self):

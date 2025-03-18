@@ -177,12 +177,14 @@ CoevGeneration FuzzyCoco::next(CoevGeneration& cogen) {
 
 CoevGeneration FuzzyCoco::run() {
   auto gen = start();
+  _fitness_history.clear();
   const int nb_generations = getParams().global_params.max_generations;
   const double max_fit = getParams().global_params.max_fitness;
   for (int i = 0; i < nb_generations; i++) {
     gen = next(gen);
+    double current_fitness = gen.fitness();
+    _fitness_history.push_back(current_fitness);
     logger() << gen.fitness() << ", ";
-
     if (gen.fitness() >= max_fit) break;
   }
   logger() << endl;

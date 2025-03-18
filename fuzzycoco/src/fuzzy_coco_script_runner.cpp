@@ -3,6 +3,12 @@
 #include <iostream>
 #include <duktape.h>
 #include "fuzzy_coco_script_runner.h"
+#include <filesystem>
+#include "fuzzy_coco.h"
+#include "logging_logger.h"
+#include "file_utils.h"
+using namespace logging;
+
 
 static FuzzyCocoScriptRunner* REGISTERED_RUNNER = 0;
 
@@ -125,6 +131,57 @@ void destroy_duktape(duk_context* engine) {
     duk_pop(engine);
     duk_destroy_heap(engine);
 }
+
+
+// ARTHUR: CocoScriptRunnerMethod implementation very similar as the one in exec
+
+CocoScriptRunnerMethod::CocoScriptRunnerMethod(const DataFrame& df, int seed, const string& output_filename)
+    : _df(df), _seed(seed), _output_filename(output_filename) {}
+
+void CocoScriptRunnerMethod::run(const ScriptParams& params) {
+    logger() << L_time << "CocoScriptRunnerMethod::run()\n";
+    const int nb_out_vars = params.nbOutputVars;
+    assert(nb_out_vars >= 1);
+    DataFrame dfin = _df.subsetColumns(0, _df.nbcols() - nb_out_vars - 1);
+    DataFrame dfout = _df.subsetColumns(_df.nbcols() - nb_out_vars, _df.nbcols() - 1);
+
+    // Fix defuzz_thresholds (if needed)
+    ScriptParams fixed_params = params;
+    auto& defuzz_thresholds = fixed_params.coco.output_vars_defuzz_thresholds;
+    int nb_thresholds = defuzz_thresholds.size();
+    assert(nb_thresholds > 0);
+    if (nb_thresholds < nb_out_vars) {
+        int nb_missing = nb_out_vars - nb_thresholds;
+        for (int i = 0; i < nb_missing; i++) {
+            defuzz_thresholds.push_back(defuzz_thresholds.back());
+        }
+    }
+
+    RandomGenerator rng(_seed);
+    // ARTHUR: modif from the exec one to store the FuzzyCoco instance and retrieve the fitness history
+    _fuzzyCoco = std::make_unique<FuzzyCoco>(dfin, dfout, fixed_params.coco, rng);
+    logger() << *_fuzzyCoco;
+    auto gen = _fuzzyCoco->run();
+    auto desc = _fuzzyCoco->describeBestFuzzySystem();
+
+
+    // Save fuzzy system description to file or stdout.
+    if (_output_filename.empty()) {
+        cout << desc;
+    } else {
+        FileUtils::mkdir_if_needed(_output_filename);
+        fstream output_file(_output_filename, ios::out);
+        if (!output_file.is_open()) throw runtime_error(string("unable to open file ") + _output_filename);
+        output_file << desc;
+    }
+}
+
+// ARTHUR: Getter implementation
+const std::vector<double>& CocoScriptRunnerMethod::getFitnessHistory() const {
+    return _fuzzyCoco->getEvolutionFitnessHistory();
+}
+
+
 
 FuzzyCocoScriptRunner::FuzzyCocoScriptRunner(ScriptRunnerMethod& runner)
     : _runner(runner)

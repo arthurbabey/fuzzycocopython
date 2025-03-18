@@ -120,6 +120,9 @@ public:
 
     friend ostream& operator<<(ostream& out, const FuzzyCoco& ds);
 
+    // ARTHUR: expose fitness history of fuzzy coco through fuzzy system fitness
+    const std::vector<double>& getEvolutionFitnessHistory() const { return _fitness_history; }
+
 protected:
     // void run();
     // FuzzySystem* loadFuzzySystem(QList<QStringList>* listFile, SystemParameters& p);
@@ -135,6 +138,8 @@ private:
     EvolutionEngine _rules_evo;
     EvolutionEngine _mfs_evo;
     unique_ptr<CoevolutionEngine> _coev_ptr;
+
+    std::vector<double> _fitness_history;
 };
 
 #endif // FUZZY_COCO_H
