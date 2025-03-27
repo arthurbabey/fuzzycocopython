@@ -12,6 +12,8 @@
 #include <limits>
 #include <iostream>
 #include <vector>
+#include <string>
+
 using namespace std;
 
 // using double_or_missing = double;
