@@ -13,4 +13,8 @@ target_include_directories(_fuzzycoco_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/duktape
 )
 
-set_target_properties(_fuzzycoco_core PROPERTIES PREFIX "" SUFFIX ".so")
+if(WIN32)
+    set_target_properties(_fuzzycoco_core PROPERTIES PREFIX "" SUFFIX ".pyd")
+else()
+    set_target_properties(_fuzzycoco_core PROPERTIES PREFIX "" SUFFIX ".so")
+endif()
