@@ -11,7 +11,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(fuzzycoco_core, m) {
+PYBIND11_MODULE(_fuzzycoco_core, m) {
     m.doc() = "Python bindings for the FuzzyCoco project";
 
 

@@ -11,4 +11,4 @@ add_subdirectory(fuzzycoco)
 
 # Install the built extension into the Python package directory
 # Assuming the extension target is named "fuzzycocopython"
-install(TARGETS fuzzycoco_core LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/fuzzycocopython)
+install(TARGETS _fuzzycoco_core LIBRARY DESTINATION fuzzycocopython)

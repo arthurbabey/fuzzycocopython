@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from .fuzzycoco_core import (
+from ._fuzzycoco_core import (
     CocoScriptRunnerMethod,
     DataFrame,
     FuzzyCocoScriptRunner,
