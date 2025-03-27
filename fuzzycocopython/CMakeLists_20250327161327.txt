@@ -4,7 +4,6 @@ project(FuzzyCocoPython LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 find_package(pybind11 REQUIRED)
 
 # Add the subdirectory containing your C++ extension code
