@@ -41,15 +41,19 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self._rng = check_random_state(self.random_state)
 
         # Handle feature names from DataFrame or parameter
-        if isinstance(X, pd.DataFrame):
-            self.feature_names_in_ = X.columns.tolist()
-            self.target_name_in_ = y.columns.tolist()
-        elif feature_names is not None:
-            self.feature_names_in_ = feature_names
-            self.target_name_in_ = target_name
-        else:
-            self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
-            self.target_name_in_ = "OUT"
+        self.feature_names_in_ = (
+            X.columns.tolist() if isinstance(X, pd.DataFrame) else
+            feature_names if feature_names is not None else
+            [f"Feature_{i+1}" for i in range(X.shape[1])]
+        )
+        
+        self.target_name_in_ = (
+            y.columns.tolist() if isinstance(y, (pd.Series, pd.DataFrame)) else
+            target_name if target_name is not None else
+            "OUT"
+        )
+
+
         self.n_features_in_ = len(self.feature_names_in_)
 
         cdf, combined = self._prepare_data(X, y, self.target_name_in_)
