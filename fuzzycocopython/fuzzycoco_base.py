@@ -2,7 +2,6 @@ import os
 
 import pandas as pd
 from sklearn.base import BaseEstimator
-
 from ._fuzzycoco_core import (
     CocoScriptRunnerMethod,
     DataFrame,
@@ -18,6 +17,7 @@ class FuzzyCocoBase(BaseEstimator):
     def __init__(
         self,
         random_state=None,
+        scoring='accuracy',
         nbRules=3,
         nbMaxVarPerRule=3,
         nbOutVars=1,
@@ -58,6 +58,7 @@ class FuzzyCocoBase(BaseEstimator):
         verbose=False,
     ):
         self.random_state = random_state
+        self.scoring = scoring
         # params of FuzzyCoco
         self.nbRules = nbRules
         self.nbMaxVarPerRule = nbMaxVarPerRule
@@ -118,6 +119,8 @@ class FuzzyCocoBase(BaseEstimator):
         data_list = [header] + combined.astype(str).values.tolist()
         cdf = DataFrame(data_list, False)
         return cdf, combined
+
+
 
     def _run_script(self, cdf, output_filename):
 

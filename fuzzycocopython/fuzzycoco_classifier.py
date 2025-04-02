@@ -7,6 +7,7 @@ from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.metrics import get_scorer
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
@@ -99,16 +100,23 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         return y_mapped
 
     def score(self, X, y, target_name: str = "OUT"):
-        check_is_fitted(
-            self, ["model_", "classes_", "feature_names_in_", "n_features_in_"]
-        )
+        check_is_fitted(self, ["model_", "classes_", "feature_names_in_", "n_features_in_"])
         y_series = (
             pd.Series(y, name=target_name)
             if not isinstance(y, pd.Series)
             else y.rename(target_name)
         )
         y_pred = self.predict(X)
-        return accuracy_score(y_series, y_pred)
+
+        # String scorer
+        if isinstance(self.scoring, str):
+            scorer = get_scorer(self.scoring)
+            return scorer._score_func(y_series, y_pred)
+        # Callable scorer
+        elif callable(self.scoring):
+            return self.scoring(y_series, y_pred)
+        else:
+            raise ValueError(f"Invalid scoring type: {self.scoring}")
 
     def predict_with_importances(self, X):
         check_is_fitted(self, ["rules_", "model_"])
