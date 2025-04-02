@@ -48,7 +48,8 @@ def test_classifier_with_numpy_with_names(tmp_path):
         output_filename=str(output_filename),
     )
     preds = model.predict(X)
-    score = model.score(X, y, target_name="Class")
+    score = model.score(X, y)
+    #model.plot_aggregated_output(X[1])
 
     assert len(preds) == len(y)
     assert 0.0 <= score <= 1.0

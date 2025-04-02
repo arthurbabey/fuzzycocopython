@@ -31,7 +31,7 @@ class FuzzyCocoPlotMixin:
             ax.legend()
             plt.show()
 
-    def plot_fuzzification(self, sample, feature_names=None):
+    def plot_fuzzification(self, sample):
         """
         For each input linguistic variable used in the model, plot its membership functions
         and overlay the fuzzification for the corresponding crisp input value.
@@ -43,13 +43,11 @@ class FuzzyCocoPlotMixin:
         feature_names : list of str, optional
             Names corresponding to each input feature.
         """
-        check_is_fitted(self, ["variables_"])
+        check_is_fitted(self, ["variables_", "feature_names_in_", "target_name_in_"])
 
         # Build a mapping from feature name to crisp value.
-        if feature_names is not None:
-            sample_dict = {name: value for name, value in zip(feature_names, sample)}
-        else:
-            sample_dict = {f"Feature_{i+1}": value for i, value in enumerate(sample)}
+        sample_dict = {name: value for name, value in zip(self.feature_names_in_, sample)}
+        
 
         # Iterate over each linguistic variable in the model.
         for lv in self.variables_:
@@ -72,7 +70,7 @@ class FuzzyCocoPlotMixin:
             ax.legend()
             plt.show()
 
-    def plot_rule_activations(self, input_sample, feature_names=None):
+    def plot_rule_activations(self, input_sample):
         """
         Compute and plot the activation levels for each fuzzy rule for a given input sample.
 
@@ -126,7 +124,7 @@ class FuzzyCocoPlotMixin:
         plt.tight_layout()
         plt.show()
 
-    def plot_aggregated_output(self, input_sample, feature_names=None):
+    def plot_aggregated_output(self, input_sample):
         """
         Visualize the aggregated fuzzy output for a given input sample,
         using a SingletonFIS to replicate the C++ singleton-based defuzzification.
@@ -141,7 +139,7 @@ class FuzzyCocoPlotMixin:
 
         check_is_fitted(
             self,
-            ["rules_", "variables_", "default_rules_", "model_", "feature_names_in_"],
+            ["rules_", "variables_", "default_rules_", "model_", "feature_names_in_", "feature_names_in_", "target_name_in_"],
         )
 
         # Build a mapping for the input values.
@@ -149,10 +147,11 @@ class FuzzyCocoPlotMixin:
             name: value for name, value in zip(self.feature_names_in_, input_sample)
         }
 
-        # Retrieve the output linguistic variable (assuming "OUT").
+        # Retrieve the output linguistic variable
         output_lv = next(
-            (lv for lv in self.variables_ if lv.name.upper() == "OUT"), None
+            (lv for lv in self.variables_ if lv.name.upper() == self.target_name_in_.upper()), None
         )
+        
         if output_lv is None:
             raise ValueError(
                 "Output linguistic variable 'OUT' not found in self.variables_."
@@ -167,7 +166,7 @@ class FuzzyCocoPlotMixin:
         result = fis.predict(input_dict)
         result_cpp = self._predict(input_sample)
 
-        if not np.isclose(float(result.get("OUT")), float(result_cpp[0])):
+        if not np.isclose(float(result.get(self.target_name_in_)), float(result_cpp[0])):
             raise ValueError(
                 f"Python and C++ defuzzification results do not match: {result} vs. {result_cpp}"
             )

@@ -27,7 +27,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         y,
         output_filename: str = "./fuzzySystem.ffs",
         feature_names: list = None,
-        target_name: str = "OUT",
+        target_name: str = None,
     ):
 
         # Validate inputs
@@ -43,13 +43,16 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         # Handle feature names from DataFrame or parameter
         if isinstance(X, pd.DataFrame):
             self.feature_names_in_ = X.columns.tolist()
+            self.target_name_in_ = y.columns.tolist()
         elif feature_names is not None:
             self.feature_names_in_ = feature_names
+            self.target_name_in_ = target_name
         else:
             self.feature_names_in_ = [f"Feature_{i+1}" for i in range(X.shape[1])]
+            self.target_name_in_ = "OUT"
         self.n_features_in_ = len(self.feature_names_in_)
 
-        cdf, combined = self._prepare_data(X, y, target_name)
+        cdf, combined = self._prepare_data(X, y, self.target_name_in_)
         self._run_script(cdf, output_filename)
 
         self.variables_, self.rules_, self.default_rules_ = (
@@ -58,7 +61,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
 
         return self
 
-    def _predict(self, X, feature_names: list = None):
+    def _predict(self, X):
         X_arr = check_array(
             X, dtype="numeric", ensure_all_finite=False, ensure_2d=False
         )
@@ -70,10 +73,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
                 f"X has {X_arr.shape[1]} features, but model was trained with {self.n_features_in_}."
             )
 
-        feat_names = (
-            feature_names if feature_names is not None else self.feature_names_in_
-        )
-        cdf, _ = self._prepare_data(X_arr, None, feat_names)
+        cdf, _ = self._prepare_data(X=X_arr, y=None)
 
         preds = self.model_.smartPredict(cdf).to_list()
         return np.array([row[0] for row in preds])
@@ -90,7 +90,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
                 f"X has {X.shape[1]} features, "
                 f"but this {self.__class__.__name__} was fitted with {self.n_features_in_} features."
             )
-        raw_vals = self._predict(X, self.feature_names_in_)
+        raw_vals = self._predict(X)
         y_pred = np.array([round(val) for val in raw_vals])  # Standard rounding
         y_pred = np.clip(
             y_pred, 0, len(self.classes_) - 1
@@ -99,12 +99,12 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
 
         return y_mapped
 
-    def score(self, X, y, target_name: str = "OUT"):
-        check_is_fitted(self, ["model_", "classes_", "feature_names_in_", "n_features_in_"])
+    def score(self, X, y):
+        check_is_fitted(self, ["model_", "classes_", "feature_names_in_", "n_features_in_", "target_name_in_"])
         y_series = (
-            pd.Series(y, name=target_name)
+            pd.Series(y, name=self.target_name_in_)
             if not isinstance(y, pd.Series)
-            else y.rename(target_name)
+            else y.rename(self.target_name_in_)
         )
         y_pred = self.predict(X)
 
