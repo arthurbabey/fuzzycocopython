@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -182,3 +183,67 @@ class FuzzyCocoBase(BaseEstimator):
     def _load(self, filename: str):
         desc = NamedList.parse(filename)
         return FuzzySystem.load(desc.get_list("fuzzy_system"))
+
+
+
+    def __getstate__(self):
+        """
+        1) Save initialization parameters (so we can call __init__ later).
+        2) Copy the full __dict__ but remove the unpickleable model_.
+        3) Also remove alpha, model_filename, etc. from the dict copy so
+        they don't conflict with the values we pass to __init__.
+        """
+        state = {}
+        # 1) Capture init params
+        state['init_params'] = self.get_params()
+
+        # 2) Copy everything from __dict__ as 'attributes'
+        #    Then drop unpickleable or conflicting items.
+        attributes = self.__dict__.copy()
+        if 'model_' in attributes:
+            del attributes['model_']  # remove unpickleable object
+
+        # Now 'attributes' still holds e.g. n_features_in_, feature_names_in_, classes_, etc.
+        # (Those are all pickleable Python objects.)
+        state['attributes'] = attributes
+        return state
+
+    def __setstate__(self, state):
+        """
+        1) Re-run __init__ with init_params.
+        2) Restore all the other learned attributes from 'attributes'.
+        3) Reload the model_ from the file if it exists.
+        """
+        # 1) Reconstruct estimator from the saved init params
+        init_params = state.get('init_params', {})
+        self.__init__(**init_params)
+
+        # 2) Restore everything else (like n_features_in_, feature_names_in_, etc.)
+        self.__dict__.update(state.get('attributes', {}))
+
+        # 3) If we have a valid filename, re-load the unpickleable model
+        if self.model_filename_:
+            self.model_ = self._load(self.model_filename_)
+            self._is_fitted = True
+        else:
+            self._is_fitted = False
+            
+
+    def save(self, filepath):
+        """Save the estimator (excluding the unpickleable C++ model)."""
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
+
+    def load_weights(self, filepath):
+        with open(filepath, 'rb') as f:
+            loaded = pickle.load(f)
+        # Copy over learned attributes, but not init
+        learned_keys = [k for k in loaded.__dict__ if k not in self.get_params()]
+        for k in learned_keys:
+            setattr(self, k, getattr(loaded, k))
+        return self
+
+    @classmethod
+    def load(cls, filepath):
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)

@@ -30,6 +30,8 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         target_name: str = None,
     ):
 
+        self.model_filename_ = output_filename
+        
         # Validate inputs
         X, y = check_X_y(X, y, dtype=float, ensure_2d=True, ensure_all_finite=True)
         check_classification_targets(y)
@@ -62,7 +64,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self.variables_, self.rules_, self.default_rules_ = (
             parse_fuzzy_system_from_model(self.model_)
         )
-
+        self._is_fitted = True
         return self
 
     def _predict(self, X):
