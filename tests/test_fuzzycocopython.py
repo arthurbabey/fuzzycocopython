@@ -96,7 +96,7 @@ def test_regressor_with_numpy_with_names(tmp_path):
         output_filename=str(output_filename),
     )
     preds = model.predict(X)
-    score = model.score(X, y, target_name="Y")
+    score = model.score(X, y)
 
     assert len(preds) == 20
     assert isinstance(score, float)

@@ -1,11 +1,7 @@
-import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from lfa_toolbox.view.mf_viewer import MembershipFunctionViewer
 from sklearn.base import ClassifierMixin
-from sklearn.metrics import accuracy_score
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import get_scorer
 from sklearn.utils.validation import (
@@ -55,7 +51,6 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
             "OUT"
         )
 
-
         self.n_features_in_ = len(self.feature_names_in_)
 
         cdf, combined = self._prepare_data(X, y, self.target_name_in_)
@@ -67,35 +62,21 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self._is_fitted = True
         return self
 
-    def _predict(self, X):
-        X_arr = check_array(
-            X, dtype="numeric", ensure_all_finite=False, ensure_2d=False
-        )
-        if X_arr.ndim == 1:
-            X_arr = X_arr.reshape(1, -1)
-
-        if X_arr.shape[1] != self.n_features_in_:
-            raise ValueError(
-                f"X has {X_arr.shape[1]} features, but model was trained with {self.n_features_in_}."
-            )
-
+    def _predict(self, X_arr):
         cdf, _ = self._prepare_data(X=X_arr, y=None)
-
         preds = self.model_.smartPredict(cdf).to_list()
         return np.array([row[0] for row in preds])
 
     def predict(self, X):
         check_is_fitted(self, ["model_", "feature_names_in_", "n_features_in_"])
-        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=False)
+        X = check_array(X, dtype=float, ensure_all_finite=True, ensure_2d=True)
         if X.ndim == 1:
             X = X.reshape(1, -1)
 
         # Verify the number of features matches
         if X.shape[1] != self.n_features_in_:
-            raise ValueError(
-                f"X has {X.shape[1]} features, "
-                f"but this {self.__class__.__name__} was fitted with {self.n_features_in_} features."
-            )
+            raise ValueError(f"X has {X.shape[1]} features, but expected {self.n_features_in_}.")
+
         raw_vals = self._predict(X)
         y_pred = np.array([round(val) for val in raw_vals])  # Standard rounding
         y_pred = np.clip(
