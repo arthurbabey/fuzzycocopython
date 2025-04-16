@@ -2,6 +2,7 @@ import os
 import pickle
 
 import pandas as pd
+import numpy as np
 from sklearn.base import BaseEstimator
 from ._fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -101,10 +102,21 @@ class FuzzyCocoBase(BaseEstimator):
         self.verbose = verbose
 
     def _prepare_data(self, X, y=None, target_name="OUT"):
+        # Convert input to numpy array if needed
+        X = np.asarray(X)
 
-        # Convert X to DataFrame if not already
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X, columns=self.feature_names_in_)
+        # If X is 1D (single sample), reshape to (1, n_features)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+
+        # If X is 2D but has shape (n, 1), ensure it aligns with self.feature_names_in_
+        if X.shape[1] != len(self.feature_names_in_):
+            raise ValueError(
+                f"X has {X.shape[1]} features, but expected {len(self.feature_names_in_)}: {self.feature_names_in_}"
+            )
+
+        # Convert to DataFrame
+        X = pd.DataFrame(X, columns=self.feature_names_in_)
 
         # Combine X and y if y is provided
         if y is not None:
@@ -120,6 +132,7 @@ class FuzzyCocoBase(BaseEstimator):
         data_list = [header] + combined.astype(str).values.tolist()
         cdf = DataFrame(data_list, False)
         return cdf, combined
+
 
 
 

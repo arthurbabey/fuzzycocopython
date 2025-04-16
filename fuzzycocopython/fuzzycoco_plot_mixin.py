@@ -170,7 +170,6 @@ class FuzzyCocoPlotMixin:
             raise ValueError(
                 f"Python and C++ defuzzification results do not match: {result} vs. {result_cpp}"
             )
-
         # Show the aggregated fuzzy output via FISViewer.
         fisv = FISViewer(fis, figsize=(12, 10))
         fisv.show()
