@@ -28,7 +28,6 @@ class FuzzyCocoRegressor(FuzzyCocoPlotMixin, RegressorMixin, FuzzyCocoBase):
     ):
         fd, tmp_ffs = tempfile.mkstemp(suffix=".ffs")
         os.close(fd)
-        self.model_filename_ = None
 
         X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=True)
         if X.shape[0] == 0:

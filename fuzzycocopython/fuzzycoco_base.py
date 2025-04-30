@@ -199,50 +199,29 @@ class FuzzyCocoBase(BaseEstimator):
         desc = NamedList.parse(filename)
         return FuzzySystem.load(desc.get_list("fuzzy_system"))
 
+    def _load_from_bytes(self, data: bytes):
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".ffs")
+        tmp.write(data)
+        tmp.close()
+        model = self._load(tmp.name)
+        os.unlink(tmp.name)
+        return model
 
     def __getstate__(self):
         state = {"init_params": self.get_params()}
         init_keys = set(state["init_params"])
         attrs = {k: v for k, v in self.__dict__.items() if k not in init_keys and k != "model_"}
         state["attributes"] = attrs
-        ffs = getattr(self, "_ffs_bytes", None)
-        if ffs is None:
-            fname = attrs.get("model_filename_", None)
-            if fname and os.path.isfile(fname):
-                with open(fname, "rb") as fh:
-                    ffs = fh.read()
-        state["ffs_bytes"] = ffs
+        state["ffs_bytes"] = getattr(self, "_ffs_bytes", None)
         return state
-
-
+    
     def __setstate__(self, state):
-        """
-        Rebuild the estimator from the pickle.
-
-        1. Call ``__init__`` with saved hyper-parameters.
-        2. Restore every learned Python attribute.
-        3. Reconstruct the C++ ``FuzzySystem`` either from the embedded
-           ``ffs_bytes`` or, failing that, from ``model_filename_`` on disk.
-        """
-        # 1) Re-initialise
         self.__init__(**state.get("init_params", {}))
-
-        # 2) Restore learned attributes (classes_, _is_fitted, …)
         self.__dict__.update(state.get("attributes", {}))
 
-        # 3) Rebuild C++ model
         ffs_bytes = state.get("ffs_bytes")
         if ffs_bytes:
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".ffs")
-            tmp.write(ffs_bytes)
-            tmp.close()
-            desc = NamedList.parse(tmp.name)
-            self.model_ = FuzzySystem.load(desc.get_list("fuzzy_system"))
-            os.unlink(tmp.name)
-            self._is_fitted = True
-        elif getattr(self, "model_filename_", None):
-            self.model_ = self._load(self.model_filename_)
+            self.model_ = self._load_from_bytes(ffs_bytes)
             self._is_fitted = True
         else:
-            # Keep attribute present so downstream checks won't crash
             self._is_fitted = False

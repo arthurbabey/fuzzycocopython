@@ -28,7 +28,6 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
     ):
         fd, tmp_ffs = tempfile.mkstemp(suffix=".ffs")
         os.close(fd)
-        self.model_filename_ = None
 
         X, y = check_X_y(X, y, dtype=float, ensure_2d=True, ensure_all_finite=True)
         check_classification_targets(y)
@@ -50,6 +49,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, ClassifierMixin, FuzzyCocoBase):
         self.n_features_in_ = len(self.feature_names_in_)
 
         cdf, _ = self._prepare_data(X, y, self.target_name_in_)
+        # here we set self.model_
         self._run_script(cdf, tmp_ffs)
 
         with open(tmp_ffs, "rb") as fh:
