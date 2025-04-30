@@ -16,6 +16,7 @@ dependencies = [
     "scikit_build_core",
     "pre-commit",
     "pytest",
+    "lfa_toolbox @ git+https://github.com/arthurbabey/lfa_toolbox.git@master",
 ]
 
 [build-system]
