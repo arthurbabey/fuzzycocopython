@@ -1,3 +1,5 @@
+import os
+import tempfile
 import numpy as np
 import pandas as pd
 from sklearn.base import RegressorMixin
@@ -21,44 +23,43 @@ class FuzzyCocoRegressor(FuzzyCocoPlotMixin, RegressorMixin, FuzzyCocoBase):
         self,
         X,
         y,
-        output_filename: str = "fuzzySystem.ffs",
         feature_names: list = None,
         target_name: str = None,
     ):
-        
-        self.model_filename_ = output_filename
+        fd, tmp_ffs = tempfile.mkstemp(suffix=".ffs")
+        os.close(fd)
+        self.model_filename_ = None
 
-        # Validate inputs
         X, y = check_X_y(X, y, dtype="numeric", ensure_2d=True, ensure_all_finite=True)
         if X.shape[0] == 0:
             raise ValueError("No samples found in X. At least one sample is required.")
-        
-        # handl random state
         self._rng = check_random_state(self.random_state)
 
-        # Handle feature names from DataFrame or parameter
         self.feature_names_in_ = (
             X.columns.tolist() if isinstance(X, pd.DataFrame) else
             feature_names if feature_names is not None else
             [f"Feature_{i+1}" for i in range(X.shape[1])]
         )
-        
         self.target_name_in_ = (
             y.columns.tolist() if isinstance(y, (pd.Series, pd.DataFrame)) else
             target_name if target_name is not None else
             "OUT"
         )
-             
         self.n_features_in_ = len(self.feature_names_in_)
 
-        cdf, combined = self._prepare_data(X, y, self.target_name_in_)
+        cdf, _ = self._prepare_data(X, y, self.target_name_in_)
+        self._run_script(cdf, tmp_ffs)
 
-        self._run_script(cdf, output_filename)
+        with open(tmp_ffs, "rb") as fh:
+            self._ffs_bytes = fh.read()
+        os.remove(tmp_ffs)
+
         self.variables_, self.rules_, self.default_rules_ = (
             parse_fuzzy_system_from_model(self.model_)
         )
         self._is_fitted = True
         return self
+
     
     def _predict(self, X):
         cdf, _ = self._prepare_data(X, None, None)
