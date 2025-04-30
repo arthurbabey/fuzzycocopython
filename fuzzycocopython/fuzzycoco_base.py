@@ -1,8 +1,10 @@
 import os
 import pickle
+import tempfile
 
 import pandas as pd
 import numpy as np
+
 from sklearn.base import BaseEstimator
 from ._fuzzycoco_core import (
     CocoScriptRunnerMethod,
@@ -198,65 +200,49 @@ class FuzzyCocoBase(BaseEstimator):
         return FuzzySystem.load(desc.get_list("fuzzy_system"))
 
 
-
     def __getstate__(self):
-        """
-        1) Save initialization parameters (so we can call __init__ later).
-        2) Copy the full __dict__ but remove the unpickleable model_.
-        3) Also remove alpha, model_filename, etc. from the dict copy so
-        they don't conflict with the values we pass to __init__.
-        """
-        state = {}
-        # 1) Capture init params
-        state['init_params'] = self.get_params()
-
-        # 2) Copy everything from __dict__ as 'attributes'
-        #    Then drop unpickleable or conflicting items.
-        attributes = self.__dict__.copy()
-        if 'model_' in attributes:
-            del attributes['model_']  # remove unpickleable object
-
-        # Now 'attributes' still holds e.g. n_features_in_, feature_names_in_, classes_, etc.
-        # (Those are all pickleable Python objects.)
-        state['attributes'] = attributes
+        state = {"init_params": self.get_params()}
+        init_keys = set(state["init_params"])
+        attrs = {k: v for k, v in self.__dict__.items() if k not in init_keys and k != "model_"}
+        state["attributes"] = attrs
+        ffs = getattr(self, "_ffs_bytes", None)
+        if ffs is None:
+            fname = attrs.get("model_filename_", None)
+            if fname and os.path.isfile(fname):
+                with open(fname, "rb") as fh:
+                    ffs = fh.read()
+        state["ffs_bytes"] = ffs
         return state
+
 
     def __setstate__(self, state):
         """
-        1) Re-run __init__ with init_params.
-        2) Restore all the other learned attributes from 'attributes'.
-        3) Reload the model_ from the file if it exists.
+        Rebuild the estimator from the pickle.
+
+        1. Call ``__init__`` with saved hyper-parameters.
+        2. Restore every learned Python attribute.
+        3. Reconstruct the C++ ``FuzzySystem`` either from the embedded
+           ``ffs_bytes`` or, failing that, from ``model_filename_`` on disk.
         """
-        # 1) Reconstruct estimator from the saved init params
-        init_params = state.get('init_params', {})
-        self.__init__(**init_params)
+        # 1) Re-initialise
+        self.__init__(**state.get("init_params", {}))
 
-        # 2) Restore everything else (like n_features_in_, feature_names_in_, etc.)
-        self.__dict__.update(state.get('attributes', {}))
+        # 2) Restore learned attributes (classes_, _is_fitted, …)
+        self.__dict__.update(state.get("attributes", {}))
 
-        # 3) If we have a valid filename, re-load the unpickleable model
-        if self.model_filename_:
+        # 3) Rebuild C++ model
+        ffs_bytes = state.get("ffs_bytes")
+        if ffs_bytes:
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".ffs")
+            tmp.write(ffs_bytes)
+            tmp.close()
+            desc = NamedList.parse(tmp.name)
+            self.model_ = FuzzySystem.load(desc.get_list("fuzzy_system"))
+            os.unlink(tmp.name)
+            self._is_fitted = True
+        elif getattr(self, "model_filename_", None):
             self.model_ = self._load(self.model_filename_)
             self._is_fitted = True
         else:
+            # Keep attribute present so downstream checks won't crash
             self._is_fitted = False
-            
-
-    def save(self, filepath):
-        """Save the estimator (excluding the unpickleable C++ model)."""
-        with open(filepath, 'wb') as f:
-            pickle.dump(self, f)
-
-    def load_weights(self, filepath):
-        with open(filepath, 'rb') as f:
-            loaded = pickle.load(f)
-        # Copy over learned attributes, but not init
-        learned_keys = [k for k in loaded.__dict__ if k not in self.get_params()]
-        for k in learned_keys:
-            setattr(self, k, getattr(loaded, k))
-        return self
-
-    @classmethod
-    def load(cls, filepath):
-        with open(filepath, 'rb') as f:
-            return pickle.load(f)
