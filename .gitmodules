@@ -1,0 +1,4 @@
+[submodule "fuzzycoco"]
+	path = fuzzycoco
+	url = git@ssh.dev.azure.com:v3/lnz-bioinfo-rnd-external/HEIG/FuzzyCoCo
+	branch = explore_fitness_importance
