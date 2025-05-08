@@ -18,7 +18,7 @@ class FuzzyCocoPlotMixin:
       - self._predict (if used in plot_aggregated_output)
     """
 
-    def plot_fuzzy_sets(self):
+    def plot_fuzzy_sets(self, **kwargs):
         """
         Plot all membership functions associated with the learned fuzzy variables.
         """
@@ -27,11 +27,11 @@ class FuzzyCocoPlotMixin:
             fig, ax = plt.subplots()
             ax.set_title(lv.name)
             for label, mf in lv.ling_values.items():
-                MembershipFunctionViewer(mf, ax=ax, label=label)
+                MembershipFunctionViewer(mf, ax=ax, label=label, **kwargs)
             ax.legend()
             plt.show()
 
-    def plot_fuzzification(self, sample):
+    def plot_fuzzification(self, sample, **kwargs):
         """
         For each input linguistic variable used in the model, plot its membership functions
         and overlay the fuzzification for the corresponding crisp input value.
@@ -65,12 +65,12 @@ class FuzzyCocoPlotMixin:
 
             # Plot each membership function and overlay the fuzzification.
             for label, mf in lv.ling_values.items():
-                mvf = MembershipFunctionViewer(mf, ax=ax, label=label)
+                mvf = MembershipFunctionViewer(mf, ax=ax, label=label, **kwargs)
                 mvf.fuzzify(crisp_value)
             ax.legend()
             plt.show()
 
-    def plot_rule_activations(self, input_sample):
+    def plot_rule_activations(self, input_sample, figsize=(10, 6)):
         """
         Compute and plot the activation levels for each fuzzy rule for a given input sample.
 
@@ -101,7 +101,7 @@ class FuzzyCocoPlotMixin:
         rule_labels = [f"Rule {i+1}" for i in range(len(self.rules_))]
 
         # Create a bar chart for rule activations
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=figsize)
         bars = ax.bar(rule_labels, activations, color="skyblue", edgecolor="black")
         ax.set_xlabel("Rules", fontsize=12)
         ax.set_ylabel("Activation Level", fontsize=12)
@@ -124,7 +124,7 @@ class FuzzyCocoPlotMixin:
         plt.tight_layout()
         plt.show()
 
-    def plot_aggregated_output(self, input_sample):
+    def plot_aggregated_output(self, input_sample, figsize=(12, 10)):
         """
         Visualize the aggregated fuzzy output for a given input sample,
         using a SingletonFIS to replicate the C++ singleton-based defuzzification.
@@ -133,8 +133,8 @@ class FuzzyCocoPlotMixin:
         ----------
         input_sample : array-like
             A single sample of crisp input values.
-        feature_names : list of str, optional
-            Names corresponding to the input features.
+        figsize : tuple, optional
+            Size of the figure for the plot.
         """
 
         check_is_fitted(
@@ -171,5 +171,5 @@ class FuzzyCocoPlotMixin:
                 f"Python and C++ defuzzification results do not match: {result} vs. {result_cpp}"
             )
         # Show the aggregated fuzzy output via FISViewer.
-        fisv = FISViewer(fis, figsize=(12, 10))
+        fisv = FISViewer(fis, figsize=figsize)
         fisv.show()
