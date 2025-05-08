@@ -24,7 +24,7 @@ requires = ["scikit-build-core", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.verbose = true
+build.verbose = true        # was cmake.verbose
 logging.level = "INFO"
 build-dir = "build"
 
