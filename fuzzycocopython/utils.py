@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import math 
 
 import numpy as np
 from lfa_toolbox.core.lv.linguistic_variable import LinguisticVariable
@@ -14,7 +15,15 @@ from lfa_toolbox.core.rules.default_fuzzy_rule import DefaultFuzzyRule
 from lfa_toolbox.core.rules.fuzzy_rule import FuzzyRule
 from lfa_toolbox.core.rules.fuzzy_rule_element import Antecedent, Consequent
 
+from ._fuzzycoco_core import (
+    GlobalParams,
+    VarsParams,
+    EvolutionParams,
+    FitnessParams,
+    FuzzyCocoParams,
+    DataFrame,
 
+)
 def create_input_linguistic_variable(var_name, set_items):
     set_items = sorted(set_items, key=lambda s: s.get("position", 0))
     n = len(set_items)
@@ -89,98 +98,76 @@ def generate_generic_labels(n):
             return [f"Set {i+1}" for i in range(n)]
 
 
-# --- Main helper that parses the fuzzy system from your model ---
-
-
-def parse_fuzzy_system_from_model(model):
+def parse_fuzzy_system_from_coco(coco):
     """
-    Given a fuzzy system model (with methods:
-       - get_input_variables()
-       - get_output_variables()
-       - get_rules()
-    ),
-    parse the fuzzy system and build:
-      - a list of LinguisticVariable objects,
-      - a list of FuzzyRule objects,
-      - a list of DefaultFuzzyRule objects.
+    Parse the internal FuzzySystem of a FuzzyCoco object and return:
+      • list  linguistic_variables
+      • list  fuzzy_rules
+      • list  default_rules
 
-    For both input and output variables, the membership set names are replaced with generic labels
-    (e.g., "Low"/"High" for 2 sets, "Low"/"Medium"/"High" for 3 sets, etc.).
-    The rules are updated to use these generic labels.
+    The helper symbols assumed to exist in your code-base:
+      generate_generic_labels
+      create_input_linguistic_variable
+      create_output_linguistic_variable
+      Antecedent, Consequent, FuzzyRule, DefaultFuzzyRule
     """
+    fs = coco.get_fuzzy_system()          # ← accessor you just bound
+
+    # ------------------------------------------------------------------ variables
     linguistic_variables = []
-    lv_dict = {}  # key: variable name, value: LinguisticVariable object
-    label_mapping = {}  # key: variable name, value: {original_set_name: generic_label}
+    lv_dict       = {}      # var_name -> LinguisticVariable
+    label_mapping = {}      # var_name -> {orig_set : generic_label}
 
-    # --- Process input variables ---
-    in_vars = (
-        model.get_input_variables()
-    )  # e.g., [{'name': 'Feature_3', 'sets': [...]}, ...]
-    for var in in_vars:
-        var_name = var["name"]
-        sets = var["sets"]
-        generic_labels = generate_generic_labels(len(sets))
-        mapping = {}
-        new_sets = []
-        for label, s in zip(generic_labels, sets):
-            orig = s.get("name")
-            mapping[orig] = label
-            new_s = dict(s)  # copy the original set dictionary
-            new_s["name"] = label
-            new_sets.append(new_s)
-        label_mapping[var_name] = mapping
-        lv = create_input_linguistic_variable(var_name, new_sets)
+    # -------- input vars
+    for var in fs.get_input_variables():                  # [{'name': …, 'sets':[...]}, ...]
+        name  = var["name"]
+        sets  = var["sets"]
+        glabs = generate_generic_labels(len(sets))
+        mapping, new_sets = {}, []
+        for g, s in zip(glabs, sets):
+            mapping[s["name"]] = g
+            ns = dict(s); ns["name"] = g
+            new_sets.append(ns)
+        label_mapping[name] = mapping
+        lv = create_input_linguistic_variable(name, new_sets)
         linguistic_variables.append(lv)
-        lv_dict[var_name] = lv
+        lv_dict[name] = lv
 
-    # --- Process output variables ---
-    out_vars = model.get_output_variables()
-    for var in out_vars:
-        var_name = var["name"]
-        sets = var["sets"]
-        # Optionally, you may also want generic labels for output variables.
-        generic_labels = generate_generic_labels(len(sets))
-        mapping = {}
-        new_sets = []
-        for label, s in zip(generic_labels, sets):
-            orig = s.get("name")
-            mapping[orig] = label
-            new_s = dict(s)
-            new_s["name"] = label
-            new_sets.append(new_s)
-        label_mapping[var_name] = mapping
-        lv = create_output_linguistic_variable(var_name, new_sets)
+    # -------- output vars
+    for var in fs.get_output_variables():
+        name, sets = var["name"], var["sets"]
+        glabs = generate_generic_labels(len(sets))
+        mapping, new_sets = {}, []
+        for g, s in zip(glabs, sets):
+            mapping[s["name"]] = g
+            ns = dict(s); ns["name"] = g
+            new_sets.append(ns)
+        label_mapping[name] = mapping
+        lv = create_output_linguistic_variable(name, new_sets)
         linguistic_variables.append(lv)
-        lv_dict[var_name] = lv
+        lv_dict[name] = lv
 
-    # --- Process rules ---
-    fixed_act_func = (np.min, "AND_min")
-    fixed_impl_func = (np.min, "AND_min")
-    fuzzy_rules = []
+    # ------------------------------------------------------------------ rules
+    fuzzy_rules   = []
     default_rules = []
-    rules_data = (
-        model.get_rules()
-    )  # e.g., list of dicts with keys "antecedents" and "consequents"
-    for rule in rules_data:
-        ants_data = rule.get("antecedents", [])
-        cons_data = rule.get("consequents", [])
+
+    fixed_act_func  = (np.min, "AND_min")
+    fixed_impl_func = (np.min, "AND_min")
+
+    for rule in fs.get_rules():           # list[dict] with antecedents / consequents
         ants = []
         cons = []
-        for ant in ants_data:
-            var_name = ant["var_name"]
-            orig_set = ant["set_name"]
-            # Substitute with the generic label if available:
-            set_name = label_mapping.get(var_name, {}).get(orig_set, orig_set)
-            lv = lv_dict.get(var_name)
-            if lv is not None:
-                ants.append(Antecedent(lv, set_name, is_not=False))
-        for con in cons_data:
-            var_name = con["var_name"]
-            orig_set = con["set_name"]
-            set_name = label_mapping.get(var_name, {}).get(orig_set, orig_set)
-            lv = lv_dict.get(var_name)
-            if lv is not None:
-                cons.append(Consequent(lv, set_name))
+
+        for ant in rule.get("antecedents", []):
+            v  = ant["var_name"]
+            lab= label_mapping[v].get(ant["set_name"], ant["set_name"])
+            ants.append(Antecedent(lv_dict[v], lab, is_not=False))
+
+        for con in rule.get("consequents", []):
+            v  = con["var_name"]
+            lab= label_mapping[v].get(con["set_name"], con["set_name"])
+            cons.append(Consequent(lv_dict[v], lab))
+
         if ants:
             fuzzy_rules.append(FuzzyRule(ants, fixed_act_func, cons, fixed_impl_func))
         else:
@@ -189,91 +176,94 @@ def parse_fuzzy_system_from_model(model):
     return linguistic_variables, fuzzy_rules, default_rules
 
 
-def generate_fs_file(
-    nbRules,
-    nbMaxVarPerRule,
-    nbOutVars,
-    nbInSets,
-    nbOutSets,
-    inVarsCodeSize,
-    outVarsCodeSize,
-    inSetsCodeSize,
-    outSetsCodeSize,
-    inSetsPosCodeSize,
-    outSetPosCodeSize,
-    maxGenPop1,
-    maxFitPop1,
-    elitePop1,
-    popSizePop1,
-    cxProbPop1,
-    mutFlipIndPop1,
-    mutFlipBitPop1,
-    elitePop2,
-    popSizePop2,
-    cxProbPop2,
-    mutFlipIndPop2,
-    mutFlipBitPop2,
-    sensitivityW,
-    specificityW,
-    accuracyW,
-    ppvW,
-    rmseW,
-    rrseW,
-    raeW,
-    mxeW,
-    distanceThresholdW,
-    distanceMinThresholdW,
-    dontCareW,
-    overLearnW,
+
+# ───────────────────────── internal helpers ────────────────────────────
+def _bits_for_nb(nb):
+    return 0 if nb < 2 else int(math.ceil(math.log2(nb)))
+
+def _make_dataframe(mat, header):
+    rows = [header] + [[str(v) for v in row] for row in mat]
+    return DataFrame(rows, False)
+
+def _build_cpp_params(
+    *,
+    n_features,
+    # global
+    nb_rules,
+    nb_max_var_per_rule,
+    max_generations,
+    max_fitness,
+    nb_cooperators,
+    influence_rules_initial_population,
+    influence_evolving_ratio,
+    # vars
+    nb_sets_in,
+    nb_bits_vars_in,
+    nb_bits_sets_in,
+    nb_bits_pos_in,
+    nb_sets_out,
+    nb_bits_vars_out,
+    nb_bits_sets_out,
+    nb_bits_pos_out,
+    # GA
+    rules_pop_size,
+    mfs_pop_size,
+    elite_size,
+    cx_prob,
+    mut_flip_genome,
+    mut_flip_bit,
+    # fitness
     threshold,
-    threshActivated,
+    metrics_weights,
+    features_weights,
 ):
+    gp = GlobalParams()
+    gp.nb_rules = nb_rules
+    gp.nb_max_var_per_rule = nb_max_var_per_rule
+    gp.max_generations = max_generations
+    gp.max_fitness = max_fitness
+    gp.nb_cooperators = nb_cooperators
+    gp.influence_rules_initial_population = influence_rules_initial_population
+    gp.influence_evolving_ratio = influence_evolving_ratio
 
-    unique_id = str(uuid.uuid4())
-    filename = f"temp_file_{unique_id}.fs"
+    iv = VarsParams()
+    iv.nb_sets       = nb_sets_in
+    iv.nb_bits_vars  = nb_bits_vars_in or (_bits_for_nb(n_features) + 1)
+    iv.nb_bits_sets  = nb_bits_sets_in or _bits_for_nb(nb_sets_in)
+    iv.nb_bits_pos   = nb_bits_pos_in     # default 8 provided in __init__
 
-    with open(filename, "w") as f:
-        f.write('experiment_name = "placeholder";\n')
-        f.write('savePath = "placeholder";\n')
-        f.write("nbRules = " + str(nbRules) + ";\n")
-        f.write("nbMaxVarPerRule = " + str(nbMaxVarPerRule) + ";\n")
-        f.write("nbOutVars = " + str(nbOutVars) + ";\n")
-        f.write("nbInSets = " + str(nbInSets) + ";\n")
-        f.write("nbOutSets = " + str(nbOutSets) + ";\n")
-        f.write("inVarsCodeSize = " + str(inVarsCodeSize) + ";\n")
-        f.write("outVarsCodeSize = " + str(outVarsCodeSize) + ";\n")
-        f.write("inSetsCodeSize = " + str(inSetsCodeSize) + ";\n")
-        f.write("outSetsCodeSize = " + str(outSetsCodeSize) + ";\n")
-        f.write("inSetsPosCodeSize = " + str(inSetsPosCodeSize) + ";\n")
-        f.write("outSetPosCodeSize = " + str(outSetPosCodeSize) + ";\n")
-        f.write("maxGenPop1 = " + str(maxGenPop1) + ";\n")
-        f.write("maxFitPop1 = " + str(maxFitPop1) + ";\n")
-        f.write("elitePop1 = " + str(elitePop1) + ";\n")
-        f.write("popSizePop1 = " + str(popSizePop1) + ";\n")
-        f.write("cxProbPop1 = " + str(cxProbPop1) + ";\n")
-        f.write("mutFlipIndPop1 = " + str(mutFlipIndPop1) + ";\n")
-        f.write("mutFlipBitPop1 = " + str(mutFlipBitPop1) + ";\n")
-        f.write("elitePop2 = " + str(elitePop2) + ";\n")
-        f.write("popSizePop2 = " + str(popSizePop2) + ";\n")
-        f.write("cxProbPop2 = " + str(cxProbPop2) + ";\n")
-        f.write("mutFlipIndPop2 = " + str(mutFlipIndPop2) + ";\n")
-        f.write("mutFlipBitPop2 = " + str(mutFlipBitPop2) + ";\n")
-        f.write("sensitivityW = " + str(sensitivityW) + ";\n")
-        f.write("specificityW = " + str(specificityW) + ";\n")
-        f.write("accuracyW = " + str(accuracyW) + ";\n")
-        f.write("ppvW = " + str(ppvW) + ";\n")
-        f.write("rmseW = " + str(rmseW) + ";\n")
-        f.write("rrseW = " + str(rrseW) + ";\n")
-        f.write("raeW = " + str(raeW) + ";\n")
-        f.write("mxeW = " + str(mxeW) + ";\n")
-        f.write("distanceThresholdW = " + str(distanceThresholdW) + ";\n")
-        f.write("distanceMinThresholdW = " + str(distanceMinThresholdW) + ";\n")
-        f.write("dontCareW = " + str(dontCareW) + ";\n")
-        f.write("overLearnW = " + str(overLearnW) + ";\n")
-        f.write("threshold = " + str(threshold) + ";\n")
-        f.write("threshActivated = " + str(threshActivated).lower() + ";\n")
-        f.write(
-            "function doSetParams()\n{\n    setParams(nbRules, nbMaxVarPerRule, nbOutVars, nbInSets, nbOutSets, inVarsCodeSize, outVarsCodeSize, inSetsCodeSize, outSetsCodeSize, inSetsPosCodeSize, outSetPosCodeSize, maxGenPop1, maxFitPop1, elitePop1, popSizePop1, cxProbPop1, mutFlipIndPop1, mutFlipBitPop1, elitePop2, popSizePop2, cxProbPop2, mutFlipIndPop2,mutFlipBitPop2, sensitivityW, specificityW, accuracyW, ppvW, rmseW, rrseW, raeW, mxeW, distanceThresholdW, distanceMinThresholdW, dontCareW, overLearnW, threshold, threshActivated)\n}\n"
-        )
-        f.write("function doRun()\n{\n    doSetParams();\n    runEvo();\n}\ndoRun()\n")
-    return filename
+    ov = VarsParams()
+    ov.nb_sets       = nb_sets_out
+    ov.nb_bits_vars  = nb_bits_vars_out or 1
+    ov.nb_bits_sets  = nb_bits_sets_out or _bits_for_nb(nb_sets_out)
+    ov.nb_bits_pos   = nb_bits_pos_out    # default 8 provided in __init__
+
+    rp = EvolutionParams()
+    rp.pop_size        = rules_pop_size
+    rp.elite_size      = elite_size
+    rp.cx_prob         = cx_prob
+    rp.mut_flip_genome = mut_flip_genome
+    rp.mut_flip_bit    = mut_flip_bit
+
+    mp = EvolutionParams()
+    mp.pop_size        = mfs_pop_size
+    mp.elite_size      = elite_size
+    mp.cx_prob         = cx_prob
+    mp.mut_flip_genome = mut_flip_genome
+    mp.mut_flip_bit    = mut_flip_bit
+
+    fp = FitnessParams()
+    fp.output_vars_defuzz_thresholds = [threshold]
+    if metrics_weights is not None:
+        fp.metrics_weights = metrics_weights
+    if features_weights is not None:
+        fp.features_weights = features_weights
+
+    params = FuzzyCocoParams()
+    params.global_params      = gp
+    params.input_vars_params  = iv
+    params.output_vars_params = ov
+    params.rules_params       = rp
+    params.mfs_params         = mp
+    params.fitness_params     = fp
+    return params

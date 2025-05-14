@@ -2,8 +2,6 @@
 # from . import fuzzycoco_core
 
 # simplifying basic import
-from .fuzzycoco_base import FuzzyCocoBase
-from .fuzzycoco_classifier import FuzzyCocoClassifier
-from .fuzzycoco_regressor import FuzzyCocoRegressor
+from .fuzzycoco_base import FuzzyCocoClassifier, FuzzyCocoRegressor
 
-__all__ = ["FuzzyCocoClassifier", "FuzzyCocoRegressor", "FuzzyCocoBase"]
+#__all__ = ["FuzzyCocoClassifier", "FuzzyCocoRegressor", "FuzzyCocoBase"]
