@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import copy
+import os
 from typing import Any, Optional, Sequence
 
+import joblib
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
@@ -10,7 +13,13 @@ from sklearn.metrics import get_scorer
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
-from ._fuzzycoco_core import DataFrame, FuzzyCoco, RandomGenerator
+from ._fuzzycoco_core import (
+    DataFrame,
+    FuzzyCoco,
+    FuzzyCocoParams,
+    FuzzySystem,
+    RandomGenerator,
+)
 from .utils import (
     _auto_bits,
     make_fuzzy_params,
@@ -20,6 +29,20 @@ from .utils import (
     to_views_components,
 )
 from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
+
+
+def save_model(model: "_FuzzyCocoBase", filepath: os.PathLike[str] | str, *, compress: int | bool = 3) -> str:
+    """Persist an estimator using joblib."""
+
+    path = os.fspath(filepath)
+    joblib.dump(model, path, compress=compress)
+    return path
+
+
+def load_model(filepath: os.PathLike[str] | str) -> "_FuzzyCocoBase":
+    """Load a persisted estimator."""
+
+    return joblib.load(os.fspath(filepath))
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -144,6 +167,53 @@ class _FuzzyCocoBase(BaseEstimator):
         dfin = self._make_dataframe(arr, self.feature_names_in_)
         return dfin, arr
 
+    def _ensure_fuzzy_system(self) -> FuzzySystem:
+        if getattr(self, "_fuzzy_system_", None) is not None:
+            return self._fuzzy_system_
+
+        serialized = getattr(self, "_fuzzy_system_string_", None)
+        if not serialized:
+            desc = getattr(self, "_fuzzy_system_dict_", None)
+            if desc is None:
+                if not hasattr(self, "description_"):
+                    raise RuntimeError("Estimator is missing the fuzzy system description")
+                desc = self.description_.get("fuzzy_system") if self.description_ else None
+                if desc is None:
+                    raise RuntimeError("Estimator does not contain a fuzzy system description")
+                desc = copy.deepcopy(desc)
+                self._fuzzy_system_dict_ = desc
+            if isinstance(desc, dict):
+                from . import _fuzzycoco_core  # local import to avoid cycles
+
+                serialized = _fuzzycoco_core._named_list_from_dict_to_string(desc)
+            else:
+                serialized = str(desc)
+            self._fuzzy_system_string_ = serialized
+
+        self._fuzzy_system_ = FuzzySystem.load_from_string(serialized)
+        return self._fuzzy_system_
+
+    def _predict_dataframe(self, dfin: DataFrame):
+        model = getattr(self, "model_", None)
+        if model is not None:
+            return model.predict(dfin)
+        from . import _fuzzycoco_core  # local import to avoid circular deps
+
+        if not getattr(self, "description_", None):
+            raise RuntimeError("Missing model description for prediction")
+        return _fuzzycoco_core.FuzzyCoco.load_and_predict_from_dict(dfin, self.description_)
+
+    def _compute_rule_fire_levels(self, sample: list[float]) -> np.ndarray:
+        model = getattr(self, "model_", None)
+        if model is not None:
+            values = model.rules_fire_from_values(sample)
+        else:
+            from . import _fuzzycoco_core
+
+            mapping = {name: float(value) for name, value in zip(self.feature_names_in_, sample)}
+            values = _fuzzycoco_core._rules_fire_from_description(self.description_, mapping)
+        return np.asarray(values, dtype=float)
+
 
     # ──────────────────────────────────────────────────────────────────────
     # public API
@@ -191,6 +261,13 @@ class _FuzzyCocoBase(BaseEstimator):
         self.model_.select_best()
         self.description_ = self.model_.describe()
 
+        fuzzy_system_desc = self.description_.get("fuzzy_system")
+        if fuzzy_system_desc is None:
+            raise RuntimeError("Model description missing 'fuzzy_system' section")
+        self._fuzzy_system_dict_ = copy.deepcopy(fuzzy_system_desc)
+        self._fuzzy_system_string_ = self.model_.serialize_fuzzy_system()
+        self._fuzzy_system_ = FuzzySystem.load_from_string(self._fuzzy_system_string_)
+
         parsed = parse_fuzzy_system_from_description(self.description_)
         self.variables_, self.rules_, self.default_rules_ = to_linguistic_components(*parsed)
         self.variables_view_, self.rules_view_, self.default_rules_view_ = to_views_components(*parsed)
@@ -213,7 +290,7 @@ class _FuzzyCocoBase(BaseEstimator):
             raise ValueError(
                 f"Expected {self.n_features_in_} features, got {len(sample)}",
             )
-        return np.asarray(self.model_.rules_fire_from_values(sample), dtype=float)
+        return self._compute_rule_fire_levels(sample)
 
     def rules_stat_activations(
         self,
@@ -246,7 +323,7 @@ class _FuzzyCocoBase(BaseEstimator):
             )
 
         activations = np.vstack([
-            np.asarray(self.model_.rules_fire_from_values(row.tolist()), dtype=float)
+            self._compute_rule_fire_levels(row.astype(float).tolist())
             for row in arr
         ])
 
@@ -319,6 +396,41 @@ class _FuzzyCocoBase(BaseEstimator):
             return list(names)
         return [f"rule_{i}" for i in range(n_rules)]
 
+    def __getstate__(self) -> dict[str, Any]:
+        state = self.__dict__.copy()
+        state.pop("model_", None)
+        state.pop("_fuzzy_system_", None)
+        params = state.get("params")
+        if isinstance(params, FuzzyCocoParams):
+            state["params"] = copy.deepcopy(params.describe())
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        params = state.get("params")
+        if isinstance(params, dict):
+            state["params"] = FuzzyCocoParams.from_dict(params)
+        self.__dict__.update(state)
+        self.model_ = None
+        self._fuzzy_system_ = None
+        if getattr(self, "_fuzzy_system_dict_", None) is None and getattr(self, "description_", None):
+            fuzzy_desc = self.description_.get("fuzzy_system") if self.description_ else None
+            if fuzzy_desc is not None:
+                self._fuzzy_system_dict_ = copy.deepcopy(fuzzy_desc)
+        if state.get("is_fitted_", False):
+            self._ensure_fuzzy_system()
+
+    def save(self, filepath: os.PathLike[str] | str, *, compress: int | bool = 3) -> str:
+        return save_model(self, filepath, compress=compress)
+
+    @classmethod
+    def load(cls, filepath: os.PathLike[str] | str) -> "_FuzzyCocoBase":
+        model = load_model(filepath)
+        if not isinstance(model, cls):
+            raise TypeError(
+                f"Expected instance of {cls.__name__}, got {type(model).__name__}",
+            )
+        return model
+
 
     def describe(self) -> dict[str, Any]:
         return self.description_
@@ -341,7 +453,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, _FuzzyCocoBase, ClassifierMixin):
     def predict(self, X: ArrayLike) -> np.ndarray:
         check_is_fitted(self, attributes=["model_"])
         dfin, _ = self._prepare_inference_input(X)
-        preds_df = self.model_.predict(dfin)
+        preds_df = self._predict_dataframe(dfin)
         raw = preds_df.to_list()  # list of rows
 
         if isinstance(self.classes_[0], np.ndarray) or isinstance(self.classes_, list):
@@ -370,6 +482,6 @@ class FuzzyCocoRegressor(FuzzyCocoPlotMixin, _FuzzyCocoBase, RegressorMixin):
     def predict(self, X: ArrayLike) -> np.ndarray:
         check_is_fitted(self, attributes=["model_"])
         dfin, _ = self._prepare_inference_input(X)
-        preds_df = self.model_.predict(dfin)
+        preds_df = self._predict_dataframe(dfin)
         raw = np.asarray(preds_df.to_list(), dtype=float)
         return raw.ravel() if raw.shape[1] == 1 else raw

@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
 
-from fuzzycocopython import FuzzyCocoClassifier, FuzzyCocoRegressor
+from fuzzycocopython import (
+    FuzzyCocoClassifier,
+    FuzzyCocoRegressor,
+    load_model,
+    save_model,
+)
 
 
 def test_classifier_with_pandas(tmp_path):
@@ -9,9 +14,8 @@ def test_classifier_with_pandas(tmp_path):
     X = pd.DataFrame(np.random.rand(20, 3), columns=["A", "B", "C"])
     y = pd.Series(np.random.randint(0, 2, size=20), name="Target")
 
-    output_filename = tmp_path / "fuzzySystem.ffs"
-    model = FuzzyCocoClassifier(random_state=123)  # No output_filename here
-    model.fit(X, y, output_filename=str(output_filename))  # Provide it to fit
+    model = FuzzyCocoClassifier(random_state=123)
+    model.fit(X, y)
     preds = model.predict(X)
     score = model.score(X, y)
 
@@ -23,9 +27,8 @@ def test_classifier_with_numpy_no_names(tmp_path):
     # Generate a small classification dataset
     X = np.random.rand(20, 3)
     y = np.random.randint(0, 2, size=20)
-    output_filename = tmp_path / "fuzzySystem.ffs"
     model = FuzzyCocoClassifier(random_state=123)
-    model.fit(X, y, output_filename=str(output_filename))
+    model.fit(X, y)
     preds = model.predict(X)
     score = model.score(X, y)
 
@@ -38,14 +41,12 @@ def test_classifier_with_numpy_with_names(tmp_path):
     X = np.random.rand(20, 3)
     y = np.random.randint(0, 2, size=20)
     feature_names = ["Feat1", "Feat2", "Feat3"]
-    output_filename = tmp_path / "fuzzySystem.ffs"
     model = FuzzyCocoClassifier(random_state=123)
     model.fit(
         X,
         y,
         feature_names=feature_names,
         target_name="Class",
-        output_filename=str(output_filename),
     )
     preds = model.predict(X)
     score = model.score(X, y)
@@ -59,9 +60,8 @@ def test_regressor_with_pandas(tmp_path):
     # Generate a small regression dataset
     X = pd.DataFrame(np.random.rand(20, 3), columns=["A", "B", "C"])
     y = pd.Series(np.random.rand(20), name="Target")
-    output_filename = tmp_path / "fuzzySystem.ffs"
     model = FuzzyCocoRegressor(random_state=123)
-    model.fit(X, y, output_filename=str(output_filename))
+    model.fit(X, y)
     preds = model.predict(X)
     score = model.score(X, y)
 
@@ -72,9 +72,8 @@ def test_regressor_with_pandas(tmp_path):
 def test_regressor_with_numpy_no_names(tmp_path):
     X = np.random.rand(20, 3)
     y = np.random.rand(20)
-    output_filename = tmp_path / "fuzzySystem.ffs"
     model = FuzzyCocoRegressor(random_state=123)
-    model.fit(X, y, output_filename=str(output_filename))
+    model.fit(X, y)
     preds = model.predict(X)
     score = model.score(X, y)
 
@@ -86,17 +85,50 @@ def test_regressor_with_numpy_with_names(tmp_path):
     X = np.random.rand(20, 3)
     y = np.random.rand(20)
     feature_names = ["Var1", "Var2", "Var3"]
-    output_filename = tmp_path / "fuzzySystem.ffs"
     model = FuzzyCocoRegressor(random_state=123)
     model.fit(
         X,
         y,
         feature_names=feature_names,
         target_name="Y",
-        output_filename=str(output_filename),
     )
     preds = model.predict(X)
     score = model.score(X, y)
 
     assert len(preds) == 20
     assert isinstance(score, float)
+
+
+def _generate_dataset(seed: int = 0):
+    rng = np.random.default_rng(seed)
+    X = rng.random((30, 4))
+    y_class = rng.integers(0, 3, size=30)
+    y_reg = rng.random(30)
+    return X, y_class, y_reg
+
+
+def test_classifier_save_and_load(tmp_path):
+    X, y_class, _ = _generate_dataset()
+    model = FuzzyCocoClassifier(random_state=42)
+    model.fit(X, y_class)
+
+    path = tmp_path / "classifier.pkl"
+    model.save(path)
+
+    loaded = FuzzyCocoClassifier.load(path)
+    np.testing.assert_allclose(model.predict(X), loaded.predict(X))
+
+
+def test_module_level_save_load(tmp_path):
+    X, _, y_reg = _generate_dataset(seed=1)
+    reg = FuzzyCocoRegressor(random_state=7)
+    reg.fit(X, y_reg)
+
+    path = tmp_path / "regressor.pkl"
+    save_model(reg, path)
+    loaded = load_model(path)
+
+    assert isinstance(loaded, FuzzyCocoRegressor)
+    original = reg.predict(X)
+    loaded_pred = loaded.predict(X)
+    np.testing.assert_allclose(original, loaded_pred)
