@@ -1,0 +1,375 @@
+from __future__ import annotations
+
+from typing import Any, Optional, Sequence
+
+import numpy as np
+import pandas as pd
+from numpy.typing import ArrayLike
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.metrics import get_scorer
+from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+
+from ._fuzzycoco_core import DataFrame, FuzzyCoco, RandomGenerator
+from .utils import (
+    _auto_bits,
+    make_fuzzy_params,
+    parse_fuzzy_system_from_description,
+    to_linguistic_components,
+    to_tables_components,
+    to_views_components,
+)
+from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Base wrapper
+# ────────────────────────────────────────────────────────────────────────────────
+class _FuzzyCocoBase(BaseEstimator):
+    def __init__(
+        self,
+        params: Any | None = None,
+        random_state: Optional[int] = None,
+        params_overrides: Optional[dict[str, Any]] = None,
+    ) -> None:
+        self.params = params
+        self.random_state = random_state
+        self.params_overrides = params_overrides
+
+    # ──────────────────────────────────────────────────────────────────────
+    # internal helpers
+    # ──────────────────────────────────────────────────────────────────────
+    def _resolve_seed(self) -> int:
+        rng = check_random_state(self.random_state)
+        return int(rng.randint(0, 2**32 - 1, dtype=np.uint32))
+
+    def _make_dataframe(self, arr: np.ndarray, header: Sequence[str]) -> DataFrame:
+        rows = [list(header)] + arr.astype(str).tolist()
+        return DataFrame(rows, False)
+
+    def _prepare_dataframes(
+        self,
+        X_arr: np.ndarray,
+        y_arr: Optional[np.ndarray] = None,
+        *,
+        y_headers: Optional[Sequence[str]] = None,
+    ) -> tuple[DataFrame, Optional[DataFrame]]:
+        if X_arr.ndim != 2:
+            raise ValueError("X must be a 2D array")
+        dfin = self._make_dataframe(X_arr, self.feature_names_in_)
+
+        if y_arr is None:
+            return dfin, None
+
+        if y_arr.ndim == 1:
+            y_arr = y_arr.reshape(-1, 1)
+        if y_arr.shape[0] != X_arr.shape[0]:
+            raise ValueError("X and y must have the same number of samples")
+
+        headers: Sequence[str]
+        if y_headers is not None:
+            headers = list(y_headers)
+        else:
+            headers = [f"OUT_{i + 1}" for i in range(y_arr.shape[1])]
+
+        dfout = self._make_dataframe(y_arr, headers)
+        return dfin, dfout
+
+    def _resolve_feature_names(
+        self,
+        X: ArrayLike,
+        provided: Optional[Sequence[str]],
+        n_features: int,
+    ) -> list[str]:
+        if isinstance(X, pd.DataFrame):
+            names = list(X.columns)
+        elif provided is not None:
+            names = list(provided)
+        else:
+            names = [f"feature_{i + 1}" for i in range(n_features)]
+
+        if len(names) != n_features:
+            raise ValueError(
+                "feature_names length does not match number of features",
+            )
+        return names
+
+    def _resolve_target_headers(
+        self,
+        y: ArrayLike,
+        y_arr: np.ndarray,
+        provided: Optional[str],
+    ) -> tuple[list[str], str]:
+        if y_arr.ndim == 1:
+            y_arr = y_arr.reshape(-1, 1)
+
+        if isinstance(y, pd.DataFrame):
+            headers = list(y.columns)
+        elif isinstance(y, pd.Series):
+            headers = [y.name] if y.name else []
+        else:
+            headers = []
+
+        if not headers:
+            if provided:
+                if y_arr.shape[1] == 1:
+                    headers = [provided]
+                else:
+                    headers = [f"{provided}_{i + 1}" for i in range(y_arr.shape[1])]
+            else:
+                headers = [f"OUT_{i + 1}" for i in range(y_arr.shape[1])]
+
+        target_name = provided or (headers[0] if headers else "OUT")
+        return headers, target_name
+
+    def _prepare_inference_input(self, X: ArrayLike) -> tuple[DataFrame, np.ndarray]:
+        if isinstance(X, pd.DataFrame):
+            try:
+                aligned = X.loc[:, self.feature_names_in_]
+            except KeyError as exc:
+                missing = set(self.feature_names_in_) - set(X.columns)
+                raise ValueError(
+                    f"Missing features in input data: {sorted(missing)}",
+                ) from exc
+            raw = aligned.to_numpy(dtype=float)
+        else:
+            raw = np.asarray(X, dtype=float)
+
+        arr = check_array(raw, accept_sparse=False, ensure_2d=True, dtype=float)
+        if arr.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"Expected {self.n_features_in_} features, got {arr.shape[1]}",
+            )
+
+        dfin = self._make_dataframe(arr, self.feature_names_in_)
+        return dfin, arr
+
+
+    # ──────────────────────────────────────────────────────────────────────
+    # public API
+    # ──────────────────────────────────────────────────────────────────────
+    def fit(self, X: ArrayLike, y: ArrayLike, **fit_params: Any) -> "_FuzzyCocoBase":
+        feature_names = fit_params.pop("feature_names", None)
+        target_name = fit_params.pop("target_name", None)
+        fit_params.pop("output_filename", None)  # backward compat, no-op
+        if fit_params:
+            unexpected = ", ".join(sorted(fit_params))
+            raise TypeError(f"Unexpected fit parameters: {unexpected}")
+
+        X_arr, y_arr = check_X_y(
+            X,
+            y,
+            accept_sparse=False,
+            ensure_2d=True,
+            force_all_finite=True,
+            dtype=float,
+        )
+
+        self.feature_names_in_ = self._resolve_feature_names(X, feature_names, X_arr.shape[1])
+        self.n_features_in_ = len(self.feature_names_in_)
+
+        y_arr = np.asarray(y_arr, dtype=float)
+        y_2d = y_arr.reshape(-1, 1) if y_arr.ndim == 1 else y_arr
+        y_headers, resolved_target = self._resolve_target_headers(y, y_2d, target_name)
+        self.target_name_in_ = resolved_target
+        self.n_outputs_ = y_2d.shape[1]
+
+        overrides = dict(self.params_overrides or {})
+        if not self.params:
+            overrides.setdefault("nb_max_var_per_rule", X_arr.shape[1])
+            overrides.setdefault("nb_bits_vars_in", _auto_bits(X_arr.shape[1]) + 1)
+            overrides.setdefault("nb_bits_vars_out", _auto_bits(self.n_outputs_))
+            self.params = make_fuzzy_params(**overrides)
+
+        if hasattr(self.params, "fitness_params"):
+            self.params.fitness_params.fix_output_thresholds(self.n_outputs_)
+
+        dfin, dfout = self._prepare_dataframes(X_arr, y_2d, y_headers=y_headers)
+        rng = RandomGenerator(self._resolve_seed())
+        self.model_ = FuzzyCoco(dfin, dfout, self.params, rng)
+        self.model_.run()
+        self.model_.select_best()
+        self.description_ = self.model_.describe()
+
+        parsed = parse_fuzzy_system_from_description(self.description_)
+        self.variables_, self.rules_, self.default_rules_ = to_linguistic_components(*parsed)
+        self.variables_view_, self.rules_view_, self.default_rules_view_ = to_views_components(*parsed)
+        self.variables_df_, self.rules_df_ = to_tables_components(*parsed)
+
+        self.is_fitted_ = True
+        return self
+    
+    def predict(self, X):
+        raise NotImplementedError
+
+    def score(self, X: ArrayLike, y: ArrayLike, scoring: Optional[str] = None) -> float:
+        scorer = get_scorer(scoring or self._default_scorer)
+        return scorer(self, X, y)
+
+    def rules_activations(self, X: ArrayLike) -> np.ndarray:
+        check_is_fitted(self, attributes=["model_"])
+        sample = self._as_1d_sample(X)
+        if len(sample) != self.n_features_in_:
+            raise ValueError(
+                f"Expected {self.n_features_in_} features, got {len(sample)}",
+            )
+        return np.asarray(self.model_.rules_fire_from_values(sample), dtype=float)
+
+    def rules_stat_activations(
+        self,
+        X: ArrayLike,
+        threshold: float = 1e-12,
+        return_matrix: bool = False,
+        sort_by_impact: bool = True,
+    ):
+        """Compute aggregate rule activations for a batch of samples."""
+
+        check_is_fitted(self, attributes=["model_"])
+
+        if isinstance(X, pd.DataFrame):
+            try:
+                arr_raw = X.loc[:, self.feature_names_in_].to_numpy(dtype=float)
+            except KeyError as exc:
+                missing = set(self.feature_names_in_) - set(X.columns)
+                raise ValueError(
+                    f"Missing features in input data: {sorted(missing)}",
+                ) from exc
+        else:
+            arr_raw = np.asarray(X, dtype=float)
+
+        arr = check_array(arr_raw, accept_sparse=False, ensure_2d=True, dtype=float)
+        if arr.shape[0] == 0:
+            raise ValueError("Empty X.")
+        if arr.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"Expected {self.n_features_in_} features, got {arr.shape[1]}",
+            )
+
+        activations = np.vstack([
+            np.asarray(self.model_.rules_fire_from_values(row.tolist()), dtype=float)
+            for row in arr
+        ])
+
+        sums = activations.sum(axis=1, keepdims=True)
+        share = np.divide(activations, sums, out=np.zeros_like(activations), where=sums > 0)
+
+        usage_rate = (activations >= threshold).mean(axis=0)
+        usage_rate_pct = 100.0 * usage_rate
+        importance_pct = 100.0 * share.mean(axis=0)
+        impact_pct = usage_rate * importance_pct
+
+        idx = self._rules_index(activations.shape[1])
+        stats = pd.DataFrame(
+            {
+                "mean": activations.mean(axis=0),
+                "std": activations.std(axis=0),
+                "min": activations.min(axis=0),
+                "max": activations.max(axis=0),
+                "usage_rate": usage_rate,
+                "usage_rate_pct": usage_rate_pct,
+                "importance_pct": importance_pct,
+                "impact_pct": impact_pct,
+            },
+            index=idx,
+        )
+
+        if sort_by_impact:
+            stats = stats.sort_values("impact_pct", ascending=False)
+
+        return (stats, activations) if return_matrix else stats
+
+
+    # ---- helpers ----
+    def _as_1d_sample(self, X: ArrayLike) -> list[float]:
+        if isinstance(X, pd.Series):
+            aligned = X.reindex(self.feature_names_in_)
+            if aligned.isnull().any():
+                missing = aligned[aligned.isnull()].index.tolist()
+                raise ValueError(f"Missing features in sample: {missing}")
+            arr = aligned.to_numpy(dtype=float)
+        elif isinstance(X, pd.DataFrame):
+            if len(X) != 1:
+                raise ValueError("Provide a single-row DataFrame for rules_activations.")
+            try:
+                arr = X.loc[:, self.feature_names_in_].to_numpy(dtype=float)[0]
+            except KeyError as exc:
+                missing = set(self.feature_names_in_) - set(X.columns)
+                raise ValueError(
+                    f"Missing features in sample: {sorted(missing)}",
+                ) from exc
+        else:
+            arr = np.asarray(X, dtype=float)
+            if arr.ndim == 2 and arr.shape[0] == 1:
+                arr = arr[0]
+            elif arr.ndim != 1:
+                raise ValueError(
+                    "rules_activations expects a 1D sample or single-row 2D array.",
+                )
+
+        if arr.shape[0] != self.n_features_in_:
+            raise ValueError(
+                f"Expected {self.n_features_in_} features, got {arr.shape[0]}",
+            )
+
+        return arr.astype(float).tolist()
+
+    def _rules_index(self, n_rules):
+        names = getattr(self, "rules_", None)
+        if isinstance(names, (list, tuple)) and len(names) == n_rules:
+            return list(names)
+        return [f"rule_{i}" for i in range(n_rules)]
+
+
+    def describe(self) -> dict[str, Any]:
+        return self.description_
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Classifier wrapper
+# ────────────────────────────────────────────────────────────────────────────────
+class FuzzyCocoClassifier(FuzzyCocoPlotMixin, _FuzzyCocoBase, ClassifierMixin):
+    _default_scorer = "accuracy"
+
+    def fit(self, X: ArrayLike, y: ArrayLike, **kwargs: Any) -> "FuzzyCocoClassifier":
+        y_arr = np.asarray(y)
+        if y_arr.ndim == 1:
+            self.classes_ = np.unique(y_arr)
+        else:
+            self.classes_ = [np.unique(y_arr[:, i]) for i in range(y_arr.shape[1])]
+        return super().fit(X, y, **kwargs)
+
+    def predict(self, X: ArrayLike) -> np.ndarray:
+        check_is_fitted(self, attributes=["model_"])
+        dfin, _ = self._prepare_inference_input(X)
+        preds_df = self.model_.predict(dfin)
+        raw = preds_df.to_list()  # list of rows
+
+        if isinstance(self.classes_[0], np.ndarray) or isinstance(self.classes_, list):
+            n_outputs = len(self.classes_)
+            y_pred = np.empty((len(raw), n_outputs), dtype=self.classes_[0].dtype)
+            for i, row in enumerate(raw):
+                for j, val in enumerate(row[:n_outputs]):
+                    idx = int(round(val))
+                    idx = np.clip(idx, 0, len(self.classes_[j]) - 1)
+                    y_pred[i, j] = self.classes_[j][idx]
+            if n_outputs == 1:
+                return y_pred.ravel()
+            return y_pred
+        else:
+            # single output path
+            y_pred_idx = np.array([int(round(v[0])) for v in raw])
+            y_pred_idx = np.clip(y_pred_idx, 0, len(self.classes_) - 1)
+            return self.classes_[y_pred_idx]
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Regressor wrapper
+# ────────────────────────────────────────────────────────────────────────────────
+class FuzzyCocoRegressor(FuzzyCocoPlotMixin, _FuzzyCocoBase, RegressorMixin):
+    _default_scorer = "r2"
+
+    def predict(self, X: ArrayLike) -> np.ndarray:
+        check_is_fitted(self, attributes=["model_"])
+        dfin, _ = self._prepare_inference_input(X)
+        preds_df = self.model_.predict(dfin)
+        raw = np.asarray(preds_df.to_list(), dtype=float)
+        return raw.ravel() if raw.shape[1] == 1 else raw
