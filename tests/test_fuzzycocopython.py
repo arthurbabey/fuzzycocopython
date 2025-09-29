@@ -132,3 +132,44 @@ def test_module_level_save_load(tmp_path):
     original = reg.predict(X)
     loaded_pred = loaded.predict(X)
     np.testing.assert_allclose(original, loaded_pred)
+
+
+def test_rules_activations_and_stats():
+    X, y_class, _ = _generate_dataset(seed=5)
+    model = FuzzyCocoClassifier(random_state=1)
+    model.fit(X, y_class)
+
+    stats, matrix = model.rules_stat_activations(X, return_matrix=True, sort_by_impact=False)
+
+    # Expected reporting columns provided by the estimator
+    expected_columns = {
+        "mean",
+        "std",
+        "min",
+        "max",
+        "usage_rate",
+        "usage_rate_pct",
+        "importance_pct",
+        "impact_pct",
+    }
+    assert expected_columns.issubset(stats.columns)
+
+    # rule activation matrix aligns with samples and reported rules
+    assert matrix.shape[0] == X.shape[0]
+    assert matrix.shape[1] == stats.shape[0]
+
+    # sampling rules_activations for a single sample is consistent with the matrix
+    single = model.rules_activations(X[0])
+    assert single.shape == (matrix.shape[1],)
+    np.testing.assert_allclose(single, matrix[0], rtol=1e-6, atol=1e-6)
+
+
+def test_describe_contains_fuzzy_system():
+    X, y_class, _ = _generate_dataset(seed=3)
+    clf = FuzzyCocoClassifier(random_state=42)
+    clf.fit(X, y_class)
+
+    description = clf.describe()
+    assert isinstance(description, dict)
+    assert "fuzzy_system" in description
+    assert description["fuzzy_system"]

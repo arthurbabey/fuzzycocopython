@@ -1,4 +1,4 @@
-# . history folder
+# History / local scratch
 .history/
 
 # Byte-compiled / optimized / DLL files
@@ -6,104 +6,104 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+# C extensions / compiled artifacts
 *.so
+*.pyd
+*.dll
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+*.out
+*.pdb
+*.idb
 
-# Distribution / packaging
+# Packaging / distribution
 .Python
 build/
-develop-eggs/
+build/*
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 *.egg-info/
-.installed.cfg
+.eggs/
 *.egg
 *.whl
-
-# PyInstaller
-*.manifest
-*.spec
+pip-wheel-metadata/
 
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-pytestdebug.log
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# Environments
+# Dependency / environment management
 .env
 .venv
 env/
 venv/
 ENV/
-env.bak/
+.env.bak/
 venv.bak/
+.python-version
 
-# IDEs
+# Tool caches
+.pytest_cache/
+.tox/
+.nox/
+.mypy_cache/
+.pyre/
+.pytype/
+ruff_cache/
+.ruff_cache/
+.hypothesis/
+
+# Coverage / test reports
+.coverage
+.coverage.*
+*.cover
+*.py,cover
+cover/
+coverage.xml
+htmlcov/
+pytestdebug.log
+
+# Profiling / performance
+*.prof
+.prof*
+
+# Notebooks
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# IDE / editor
 .vscode/
 .idea/
 *.swp
 *.swo
 *.sublime-workspace
-
-# macOS
+*.code-workspace
 .DS_Store
 .AppleDouble
 .LSOverride
 
-# C++ build files
-*.o
-*.obj
-*.out
-*.exe
-*.log
-*.a
-*.lib
-*.dll
-*.dylib
-*.pdb
-*.idb
-*.class
-*.moc
-*.h.gch
-*.pybind11/
-
-# CMake
+# CMake and native build
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+CTestTestfile.cmake
+Testing/
 
-# Other
+# Submodule native build outputs
+fuzzycoco/build/
+fuzzycoco/bin/
+fuzzycoco/lib/
+
+# Logs / temp / misc
 *.log
 *.tmp
 *.bak
 *.old
 *.swp
 
-# Ignore results and generated data
+# Generated data / artifacts
 results/
 *.md.generated/
-__pycache__/

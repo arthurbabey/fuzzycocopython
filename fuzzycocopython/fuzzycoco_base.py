@@ -230,7 +230,6 @@ class _FuzzyCocoBase(BaseEstimator):
             y,
             accept_sparse=False,
             ensure_2d=True,
-            force_all_finite=True,
             dtype=float,
         )
 
