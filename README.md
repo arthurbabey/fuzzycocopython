@@ -44,7 +44,7 @@ print(clf.rules_df_.head())
 
 For a guided tour, open `demo.ipynb`. Additional usage examples live in `tests/test_fuzzycocopython.py`.
 
-## Contributing
 
-Issues and pull requests are welcome. Please run the test suite (`pytest`) after making changes to ensure
-compatibility.
+## License
+
+This fuzzycoco software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
