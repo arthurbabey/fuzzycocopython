@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import copy
 import os
-from typing import Any, Optional, Sequence
 
 import joblib
 import numpy as np
 import pandas as pd
-from numpy.typing import ArrayLike
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics import get_scorer
 from sklearn.utils import check_random_state
@@ -31,16 +29,24 @@ from .utils import (
 from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
 
 
-def save_model(model: "_FuzzyCocoBase", filepath: os.PathLike[str] | str, *, compress: int | bool = 3) -> str:
-    """Persist an estimator using joblib."""
+def save_model(model, filepath, *, compress=3):
+    """Save a fitted estimator to disk with joblib.
+
+    Parameters
+    - model: the fitted estimator instance (classifier or regressor)
+    - filepath: target path (str or Path-like)
+    - compress: joblib compression level or bool
+
+    Returns the path string.
+    """
 
     path = os.fspath(filepath)
     joblib.dump(model, path, compress=compress)
     return path
 
 
-def load_model(filepath: os.PathLike[str] | str) -> "_FuzzyCocoBase":
-    """Load a persisted estimator."""
+def load_model(filepath):
+    """Load a previously saved estimator created with save_model."""
 
     return joblib.load(os.fspath(filepath))
 
@@ -49,12 +55,9 @@ def load_model(filepath: os.PathLike[str] | str) -> "_FuzzyCocoBase":
 # Base wrapper
 # ────────────────────────────────────────────────────────────────────────────────
 class _FuzzyCocoBase(BaseEstimator):
-    def __init__(
-        self,
-        params: Any | None = None,
-        random_state: Optional[int] = None,
-        params_overrides: Optional[dict[str, Any]] = None,
-    ) -> None:
+    """Shared logic for FuzzyCocoClassifier and FuzzyCocoRegressor."""
+
+    def __init__(self, params=None, random_state=None, params_overrides=None):
         self.params = params
         self.random_state = random_state
         self.params_overrides = params_overrides
@@ -62,21 +65,18 @@ class _FuzzyCocoBase(BaseEstimator):
     # ──────────────────────────────────────────────────────────────────────
     # internal helpers
     # ──────────────────────────────────────────────────────────────────────
-    def _resolve_seed(self) -> int:
+    def _resolve_seed(self):
+        """Return a deterministic 32-bit seed derived from sklearn RNG."""
         rng = check_random_state(self.random_state)
         return int(rng.randint(0, 2**32 - 1, dtype=np.uint32))
 
-    def _make_dataframe(self, arr: np.ndarray, header: Sequence[str]) -> DataFrame:
+    def _make_dataframe(self, arr, header):
+        """Build the C++ DataFrame from a 2D numpy array and header labels."""
         rows = [list(header)] + arr.astype(str).tolist()
         return DataFrame(rows, False)
 
-    def _prepare_dataframes(
-        self,
-        X_arr: np.ndarray,
-        y_arr: Optional[np.ndarray] = None,
-        *,
-        y_headers: Optional[Sequence[str]] = None,
-    ) -> tuple[DataFrame, Optional[DataFrame]]:
+    def _prepare_dataframes(self, X_arr, y_arr=None, *, y_headers=None):
+        """Create input/output DataFrame objects (output optional)."""
         if X_arr.ndim != 2:
             raise ValueError("X must be a 2D array")
         dfin = self._make_dataframe(X_arr, self.feature_names_in_)
@@ -89,7 +89,6 @@ class _FuzzyCocoBase(BaseEstimator):
         if y_arr.shape[0] != X_arr.shape[0]:
             raise ValueError("X and y must have the same number of samples")
 
-        headers: Sequence[str]
         if y_headers is not None:
             headers = list(y_headers)
         else:
@@ -98,18 +97,16 @@ class _FuzzyCocoBase(BaseEstimator):
         dfout = self._make_dataframe(y_arr, headers)
         return dfin, dfout
 
-    def _resolve_feature_names(
-        self,
-        X: ArrayLike,
-        provided: Optional[Sequence[str]],
-        n_features: int,
-    ) -> list[str]:
+    def _resolve_feature_names(self, X, provided, n_features):
+        """Resolve final feature names from DataFrame, provided list, or defaults."""
         if isinstance(X, pd.DataFrame):
             names = list(X.columns)
         elif provided is not None:
             names = list(provided)
         else:
             names = [f"feature_{i + 1}" for i in range(n_features)]
+        # ensure string column names for the C++ DataFrame
+        names = [str(n) for n in names]
 
         if len(names) != n_features:
             raise ValueError(
@@ -117,12 +114,8 @@ class _FuzzyCocoBase(BaseEstimator):
             )
         return names
 
-    def _resolve_target_headers(
-        self,
-        y: ArrayLike,
-        y_arr: np.ndarray,
-        provided: Optional[str],
-    ) -> tuple[list[str], str]:
+    def _resolve_target_headers(self, y, y_arr, provided):
+        """Return (output headers, target name) inferred from y and overrides."""
         if y_arr.ndim == 1:
             y_arr = y_arr.reshape(-1, 1)
 
@@ -142,10 +135,13 @@ class _FuzzyCocoBase(BaseEstimator):
             else:
                 headers = [f"OUT_{i + 1}" for i in range(y_arr.shape[1])]
 
+        # ensure string headers for the C++ DataFrame
+        headers = [str(h) for h in headers]
         target_name = provided or (headers[0] if headers else "OUT")
         return headers, target_name
 
-    def _prepare_inference_input(self, X: ArrayLike) -> tuple[DataFrame, np.ndarray]:
+    def _prepare_inference_input(self, X):
+        """Align/validate prediction input and build the C++ DataFrame."""
         if isinstance(X, pd.DataFrame):
             try:
                 aligned = X.loc[:, self.feature_names_in_]
@@ -161,13 +157,14 @@ class _FuzzyCocoBase(BaseEstimator):
         arr = check_array(raw, accept_sparse=False, ensure_2d=True, dtype=float)
         if arr.shape[1] != self.n_features_in_:
             raise ValueError(
-                f"Expected {self.n_features_in_} features, got {arr.shape[1]}",
+                f"X has {arr.shape[1]} features, but {self.__class__.__name__} is expecting {self.n_features_in_} features as input",
             )
 
         dfin = self._make_dataframe(arr, self.feature_names_in_)
         return dfin, arr
 
-    def _ensure_fuzzy_system(self) -> FuzzySystem:
+    def _ensure_fuzzy_system(self):
+        """Rebuild and memoize the C++ FuzzySystem from the saved description."""
         if getattr(self, "_fuzzy_system_", None) is not None:
             return self._fuzzy_system_
 
@@ -193,7 +190,8 @@ class _FuzzyCocoBase(BaseEstimator):
         self._fuzzy_system_ = FuzzySystem.load_from_string(serialized)
         return self._fuzzy_system_
 
-    def _predict_dataframe(self, dfin: DataFrame):
+    def _predict_dataframe(self, dfin):
+        """Predict using the live engine when available, else via saved description."""
         model = getattr(self, "model_", None)
         if model is not None:
             return model.predict(dfin)
@@ -203,7 +201,8 @@ class _FuzzyCocoBase(BaseEstimator):
             raise RuntimeError("Missing model description for prediction")
         return _fuzzycoco_core.FuzzyCoco.load_and_predict_from_dict(dfin, self.description_)
 
-    def _compute_rule_fire_levels(self, sample: list[float]) -> np.ndarray:
+    def _compute_rule_fire_levels(self, sample):
+        """Compute rule activations for a single sample (1D)."""
         model = getattr(self, "model_", None)
         if model is not None:
             values = model.rules_fire_from_values(sample)
@@ -218,7 +217,7 @@ class _FuzzyCocoBase(BaseEstimator):
     # ──────────────────────────────────────────────────────────────────────
     # public API
     # ──────────────────────────────────────────────────────────────────────
-    def fit(self, X: ArrayLike, y: ArrayLike, **fit_params: Any) -> "_FuzzyCocoBase":
+    def fit(self, X, y, **fit_params):
         feature_names = fit_params.pop("feature_names", None)
         target_name = fit_params.pop("target_name", None)
         fit_params.pop("output_filename", None)  # backward compat, no-op
@@ -249,14 +248,16 @@ class _FuzzyCocoBase(BaseEstimator):
             overrides.setdefault("nb_max_var_per_rule", X_arr.shape[1])
             overrides.setdefault("nb_bits_vars_in", _auto_bits(X_arr.shape[1]) + 1)
             overrides.setdefault("nb_bits_vars_out", _auto_bits(self.n_outputs_))
-            self.params = make_fuzzy_params(**overrides)
+            params_obj = make_fuzzy_params(**overrides)
+        else:
+            params_obj = self.params if isinstance(self.params, FuzzyCocoParams) else make_fuzzy_params(self.params)
 
-        if hasattr(self.params, "fitness_params"):
-            self.params.fitness_params.fix_output_thresholds(self.n_outputs_)
+        if hasattr(params_obj, "fitness_params"):
+            params_obj.fitness_params.fix_output_thresholds(self.n_outputs_)
 
         dfin, dfout = self._prepare_dataframes(X_arr, y_2d, y_headers=y_headers)
         rng = RandomGenerator(self._resolve_seed())
-        self.model_ = FuzzyCoco(dfin, dfout, self.params, rng)
+        self.model_ = FuzzyCoco(dfin, dfout, params_obj, rng)
         self.model_.run()
         self.model_.select_best()
         self.description_ = self.model_.describe()
@@ -279,11 +280,12 @@ class _FuzzyCocoBase(BaseEstimator):
     def predict(self, X):
         raise NotImplementedError
 
-    def score(self, X: ArrayLike, y: ArrayLike, scoring: Optional[str] = None) -> float:
+    def score(self, X, y, scoring=None):
         scorer = get_scorer(scoring or self._default_scorer)
         return scorer(self, X, y)
 
-    def rules_activations(self, X: ArrayLike) -> np.ndarray:
+    def rules_activations(self, X):
+        """Compute rule activation levels for a single sample."""
         check_is_fitted(self, attributes=["model_"])
         sample = self._as_1d_sample(X)
         if len(sample) != self.n_features_in_:
@@ -292,13 +294,7 @@ class _FuzzyCocoBase(BaseEstimator):
             )
         return self._compute_rule_fire_levels(sample)
 
-    def rules_stat_activations(
-        self,
-        X: ArrayLike,
-        threshold: float = 1e-12,
-        return_matrix: bool = False,
-        sort_by_impact: bool = True,
-    ):
+    def rules_stat_activations(self, X, threshold=1e-12, return_matrix=False, sort_by_impact=True):
         """Compute aggregate rule activations for a batch of samples."""
 
         check_is_fitted(self, attributes=["model_"])
@@ -357,7 +353,8 @@ class _FuzzyCocoBase(BaseEstimator):
 
 
     # ---- helpers ----
-    def _as_1d_sample(self, X: ArrayLike) -> list[float]:
+    def _as_1d_sample(self, X):
+        """Normalize various single‑row inputs (array/Series/DF) to a 1D list."""
         if isinstance(X, pd.Series):
             aligned = X.reindex(self.feature_names_in_)
             if aligned.isnull().any():
@@ -396,7 +393,7 @@ class _FuzzyCocoBase(BaseEstimator):
             return list(names)
         return [f"rule_{i}" for i in range(n_rules)]
 
-    def __getstate__(self) -> dict[str, Any]:
+    def __getstate__(self):
         state = self.__dict__.copy()
         state.pop("model_", None)
         state.pop("_fuzzy_system_", None)
@@ -405,7 +402,7 @@ class _FuzzyCocoBase(BaseEstimator):
             state["params"] = copy.deepcopy(params.describe())
         return state
 
-    def __setstate__(self, state: dict[str, Any]) -> None:
+    def __setstate__(self, state):
         params = state.get("params")
         if isinstance(params, dict):
             state["params"] = FuzzyCocoParams.from_dict(params)
@@ -419,11 +416,12 @@ class _FuzzyCocoBase(BaseEstimator):
         if state.get("is_fitted_", False):
             self._ensure_fuzzy_system()
 
-    def save(self, filepath: os.PathLike[str] | str, *, compress: int | bool = 3) -> str:
+    def save(self, filepath, *, compress=3):
+        """Save this fitted estimator to disk (convenience wrapper)."""
         return save_model(self, filepath, compress=compress)
 
     @classmethod
-    def load(cls, filepath: os.PathLike[str] | str) -> "_FuzzyCocoBase":
+    def load(cls, filepath):
         model = load_model(filepath)
         if not isinstance(model, cls):
             raise TypeError(
@@ -432,17 +430,18 @@ class _FuzzyCocoBase(BaseEstimator):
         return model
 
 
-    def describe(self) -> dict[str, Any]:
+    def describe(self):
+        """Return the full model description (variables, rules, defaults)."""
         return self.description_
 
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Classifier wrapper
 # ────────────────────────────────────────────────────────────────────────────────
-class FuzzyCocoClassifier(FuzzyCocoPlotMixin, _FuzzyCocoBase, ClassifierMixin):
+class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoPlotMixin, _FuzzyCocoBase):
     _default_scorer = "accuracy"
 
-    def fit(self, X: ArrayLike, y: ArrayLike, **kwargs: Any) -> "FuzzyCocoClassifier":
+    def fit(self, X, y, **kwargs):
         y_arr = np.asarray(y)
         if y_arr.ndim == 1:
             self.classes_ = np.unique(y_arr)
@@ -450,7 +449,7 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, _FuzzyCocoBase, ClassifierMixin):
             self.classes_ = [np.unique(y_arr[:, i]) for i in range(y_arr.shape[1])]
         return super().fit(X, y, **kwargs)
 
-    def predict(self, X: ArrayLike) -> np.ndarray:
+    def predict(self, X):
         check_is_fitted(self, attributes=["model_"])
         dfin, _ = self._prepare_inference_input(X)
         preds_df = self._predict_dataframe(dfin)
@@ -476,10 +475,10 @@ class FuzzyCocoClassifier(FuzzyCocoPlotMixin, _FuzzyCocoBase, ClassifierMixin):
 # ────────────────────────────────────────────────────────────────────────────────
 # Regressor wrapper
 # ────────────────────────────────────────────────────────────────────────────────
-class FuzzyCocoRegressor(FuzzyCocoPlotMixin, _FuzzyCocoBase, RegressorMixin):
+class FuzzyCocoRegressor(RegressorMixin, FuzzyCocoPlotMixin, _FuzzyCocoBase):
     _default_scorer = "r2"
 
-    def predict(self, X: ArrayLike) -> np.ndarray:
+    def predict(self, X):
         check_is_fitted(self, attributes=["model_"])
         dfin, _ = self._prepare_inference_input(X)
         preds_df = self._predict_dataframe(dfin)
