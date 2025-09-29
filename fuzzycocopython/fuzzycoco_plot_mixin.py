@@ -11,22 +11,21 @@ class FuzzyCocoPlotMixin:
     A mixin class providing plotting methods for FuzzyCoco estimators.
 
     Requires that the estimator using this mixin define:
-      - self.variables_
-      - self.rules_
-      - self.model_ (if using plot_rule_activations or plot_aggregated_output)
-      - self.default_rules_ (if referencing default rules, e.g. in plot_aggregated_output)
-      - self._predict (if used in plot_aggregated_output)
+    
+      - ``self.variables_``
+      - ``self.rules_``
+      - ``self.model_`` (if using ``plot_rule_activations`` or ``plot_aggregated_output``)
+      - ``self.default_rules_`` (if referencing default rules, e.g. in ``plot_aggregated_output``)
+      - ``self._predict`` (if used in ``plot_aggregated_output``)
     """
 
     def plot_fuzzy_sets(self, variable=None, **kwargs):
-        """
-        Plot membership functions for variables.
-        Parameters
-        ----------
-        variable : None | str | list[str]
-            - None: plot all variables
-            - str: plot only that variable
-            - list[str]: plot each listed variable
+        """Plot membership functions for variables.
+
+        Args:
+            variable: None, str, or list[str]. If None, plot all variables; if str,
+                plot only that variable; if list, plot each listed variable.
+            **kwargs: Extra options passed to the membership function viewer.
         """
         var_list = self._to_var_list(variable)
 
@@ -58,16 +57,13 @@ class FuzzyCocoPlotMixin:
 
             
     def plot_fuzzification(self, sample, variable=None, **kwargs):
-        """
-        Plot membership functions and overlay fuzzification for the given sample.
-        Parameters
-        ----------
-        sample : array-like | dict | pandas.Series
-            Crisp input values (e.g., X_test.iloc[i]).
-        variable : None | str | list[str]
-            - None: plot all input variables present in the sample
-            - str: plot only that variable
-            - list[str]: plot each listed variable
+        """Plot membership functions and overlay fuzzification for a sample.
+
+        Args:
+            sample: Array-like, dict, or pandas Series holding crisp inputs.
+            variable: None, str, or list[str]. If None, plot all input variables
+                present in the sample; if str, only that variable; if list, each listed variable.
+            **kwargs: Extra options forwarded to the membership function viewer.
         """
         # Normalize sample -> dict of {feature_name: value}
         try:
@@ -122,6 +118,19 @@ class FuzzyCocoPlotMixin:
     def plot_rule_activations(
         self, x, figsize=(9, 4), sort=True, top=None, annotate=True, tick_fontsize=8
     ):
+        """Bar plot of rule activations for a single sample.
+
+        Args:
+            x: Single sample as array-like compatible with ``rules_activations``.
+            figsize: Matplotlib figure size.
+            sort: Sort bars by activation descending.
+            top: Show only the first ``top`` rules after sorting.
+            annotate: Write activation values on top of bars.
+            tick_fontsize: Font size for x tick labels.
+
+        Returns:
+            None. Displays a matplotlib figure.
+        """
         import numpy as np
         import pandas as pd
         import matplotlib.pyplot as plt
@@ -163,16 +172,13 @@ class FuzzyCocoPlotMixin:
 
 
     def plot_aggregated_output(self, input_sample, figsize=(12, 10)):
-        """
-        Visualize the aggregated fuzzy output for a given input sample,
-        using a SingletonFIS to replicate the C++ singleton-based defuzzification.
+        """Visualize the aggregated fuzzy output for an input sample.
 
-        Parameters
-        ----------
-        input_sample : array-like
-            A single sample of crisp input values.
-        figsize : tuple, optional
-            Size of the figure for the plot.
+        Uses a ``SingletonFIS`` to mirror the C++ singleton-based defuzzification.
+
+        Args:
+            input_sample: Single sample of crisp input values.
+            figsize: Matplotlib figure size.
         """
 
         # Build a mapping for the input values.

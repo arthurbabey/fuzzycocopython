@@ -101,15 +101,28 @@ def _auto_bits(n):
 
 
 def make_fuzzy_params(params=None, **flat_kwargs):
+    """Create a FuzzyCocoParams object from a nested dict or flat kwargs.
+
+    The defaults and auto-computed values are aligned with the C++ engine:
+    - Bits for variable indices use the number of variables (not sets).
+    - Bits for set indices use the number of sets.
+    - ``nb_max_var_per_rule`` defaults to 3 if not provided.
+
+    Extra keys ``nb_input_vars`` and ``nb_output_vars`` may be passed to help
+    compute the correct bit widths.
+    """
     params = params.copy() if params else {}
 
     def get(sub, key, default):
         return params.get(sub, {}).get(key, flat_kwargs.get(key, default))
 
+    nb_input_vars = flat_kwargs.get("nb_input_vars")
+    nb_output_vars = flat_kwargs.get("nb_output_vars")
+
     # Global
     g = GlobalParams()
     g.nb_rules = get("global_params", "nb_rules", 5)
-    g.nb_max_var_per_rule = get("global_params", "nb_max_var_per_rule", None)
+    g.nb_max_var_per_rule = get("global_params", "nb_max_var_per_rule", 3)
     g.max_generations = get("global_params", "max_generations", 100)
     g.max_fitness = get("global_params", "max_fitness", 1.0)
     g.nb_cooperators = get("global_params", "nb_cooperators", 2)
@@ -117,35 +130,45 @@ def make_fuzzy_params(params=None, **flat_kwargs):
     g.influence_evolving_ratio = get("global_params", "influence_evolving_ratio", 0.8)
 
     # Input vars
-    in_sets = get("input_vars_params", "nb_sets", 2)
+    in_sets = get("input_vars_params", "nb_sets", 3)
     in_vars = VarsParams()
     in_vars.nb_sets = in_sets
-    in_vars.nb_bits_vars = get("input_vars_params", "nb_bits_vars",
-                            _auto_bits(in_sets) + 1)     # NOMBRE DE VARIABLE  # ← default if None
-    in_vars.nb_bits_sets = get("input_vars_params", "nb_bits_sets",
-                            _auto_bits(in_sets))
-    in_vars.nb_bits_pos = get("input_vars_params", "nb_bits_pos", 8) # 8 surement trop grand
+    # exact C++-like logic for bits
+    if get("input_vars_params", "nb_bits_vars", None) is not None:
+        in_vars.nb_bits_vars = get("input_vars_params", "nb_bits_vars", None)
+    elif nb_input_vars is not None:
+        in_vars.nb_bits_vars = _auto_bits(nb_input_vars) + 1
+    # else leave as default (missing) which would be invalid in C++ without evaluation
+    if get("input_vars_params", "nb_bits_sets", None) is not None:
+        in_vars.nb_bits_sets = get("input_vars_params", "nb_bits_sets", None)
+    else:
+        in_vars.nb_bits_sets = _auto_bits(in_sets)
+    in_vars.nb_bits_pos = get("input_vars_params", "nb_bits_pos", 8)
 
     # Output vars
-    out_sets = get("output_vars_params", "nb_sets", 2)
+    out_sets = get("output_vars_params", "nb_sets", 3)
     out_vars = VarsParams()
     out_vars.nb_sets = out_sets
-    out_vars.nb_bits_vars = get("output_vars_params", "nb_bits_vars",
-                                _auto_bits(out_sets) + 1)     # NOMBRE DE VARIABLE  # ← default if None
-    out_vars.nb_bits_sets = get("output_vars_params", "nb_bits_sets",
-                                _auto_bits(out_sets))
-    out_vars.nb_bits_pos = get("output_vars_params", "nb_bits_pos", 8) # 8 surement trop grand
+    if get("output_vars_params", "nb_bits_vars", None) is not None:
+        out_vars.nb_bits_vars = get("output_vars_params", "nb_bits_vars", None)
+    elif nb_output_vars is not None:
+        out_vars.nb_bits_vars = _auto_bits(nb_output_vars) + 1
+    if get("output_vars_params", "nb_bits_sets", None) is not None:
+        out_vars.nb_bits_sets = get("output_vars_params", "nb_bits_sets", None)
+    else:
+        out_vars.nb_bits_sets = _auto_bits(out_sets)
+    out_vars.nb_bits_pos = get("output_vars_params", "nb_bits_pos", 8)
 
     # Evolution params
     rules = EvolutionParams()
-    rules.pop_size        = get("rules_params", "pop_size", 50)      # default 50
+    rules.pop_size        = get("rules_params", "pop_size", 50)
     rules.elite_size      = get("rules_params", "elite_size", 5)
     rules.cx_prob         = get("rules_params", "cx_prob", 0.5)
     rules.mut_flip_genome = get("rules_params", "mut_flip_genome", 0.5)
     rules.mut_flip_bit    = get("rules_params", "mut_flip_bit", 0.025)
 
     mfs = EvolutionParams()
-    mfs.pop_size        = get("mfs_params", "pop_size", 50)          # default 50
+    mfs.pop_size        = get("mfs_params", "pop_size", 50)
     mfs.elite_size      = get("mfs_params", "elite_size", 5)
     mfs.cx_prob         = get("mfs_params", "cx_prob", 0.5)
     mfs.mut_flip_genome = get("mfs_params", "mut_flip_genome", 0.5)
