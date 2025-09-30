@@ -14,7 +14,9 @@ set(FUZZYCOCO_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(FUZZYCOCO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(FUZZYCOCO_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 
-add_compile_options(-Wno-error)
+if(NOT MSVC)
+  add_compile_options(-Wno-error)
+endif()
 
 # bring in fuzzycoco
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fuzzycoco)
