@@ -28,4 +28,3 @@ set_target_properties(_fuzzycoco_core PROPERTIES
 )
 
 install(TARGETS _fuzzycoco_core LIBRARY DESTINATION fuzzycocopython)
-

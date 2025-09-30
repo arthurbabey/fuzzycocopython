@@ -16,6 +16,7 @@ copyright = f"{current_year}, {author}"
 version = release = "0.0.0"
 try:
     import tomllib  # Python 3.11+
+
     with open(os.path.join(ROOT, "pyproject.toml"), "rb") as f:
         data = tomllib.load(f)
         version = release = data.get("project", {}).get("version", version)

@@ -9,24 +9,17 @@ import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.metrics import get_scorer
 from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
-from ._fuzzycoco_core import (
-    DataFrame,
-    FuzzyCoco,
-    FuzzyCocoParams,
-    FuzzySystem,
-    RandomGenerator,
-)
+from ._fuzzycoco_core import DataFrame, FuzzyCoco, FuzzyCocoParams, FuzzySystem, RandomGenerator
+from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
 from .utils import (
-    _auto_bits,
     make_fuzzy_params,
     parse_fuzzy_system_from_description,
     to_linguistic_components,
     to_tables_components,
     to_views_components,
 )
-from .fuzzycoco_plot_mixin import FuzzyCocoPlotMixin
 
 
 def save_model(model, filepath, *, compress=3):
@@ -179,7 +172,8 @@ class _FuzzyCocoBase(BaseEstimator):
         arr = check_array(raw, accept_sparse=False, ensure_2d=True, dtype=float)
         if arr.shape[1] != self.n_features_in_:
             raise ValueError(
-                f"X has {arr.shape[1]} features, but {self.__class__.__name__} is expecting {self.n_features_in_} features as input",
+                f"X has {arr.shape[1]} features, but {self.__class__.__name__} \
+                    is expecting {self.n_features_in_} features as input",
             )
 
         dfin = self._make_dataframe(arr, self.feature_names_in_)
@@ -231,10 +225,9 @@ class _FuzzyCocoBase(BaseEstimator):
         else:
             from . import _fuzzycoco_core
 
-            mapping = {name: float(value) for name, value in zip(self.feature_names_in_, sample)}
+            mapping = {name: float(value) for name, value in zip(self.feature_names_in_, sample, strict=False)}
             values = _fuzzycoco_core._rules_fire_from_description(self.description_, mapping)
         return np.asarray(values, dtype=float)
-
 
     # ──────────────────────────────────────────────────────────────────────
     # public API
@@ -288,10 +281,14 @@ class _FuzzyCocoBase(BaseEstimator):
                 nb_output_vars=self.n_outputs_,
             )
         else:
-            params_obj = self.params if isinstance(self.params, FuzzyCocoParams) else make_fuzzy_params(
-                self.params,
-                nb_input_vars=X_arr.shape[1],
-                nb_output_vars=self.n_outputs_,
+            params_obj = (
+                self.params
+                if isinstance(self.params, FuzzyCocoParams)
+                else make_fuzzy_params(
+                    self.params,
+                    nb_input_vars=X_arr.shape[1],
+                    nb_output_vars=self.n_outputs_,
+                )
             )
 
         if hasattr(params_obj, "fitness_params"):
@@ -318,7 +315,7 @@ class _FuzzyCocoBase(BaseEstimator):
 
         self.is_fitted_ = True
         return self
-    
+
     def predict(self, X):
         """Predict outputs for ``X``.
 
@@ -400,10 +397,7 @@ class _FuzzyCocoBase(BaseEstimator):
                 f"Expected {self.n_features_in_} features, got {arr.shape[1]}",
             )
 
-        activations = np.vstack([
-            self._compute_rule_fire_levels(row.astype(float).tolist())
-            for row in arr
-        ])
+        activations = np.vstack([self._compute_rule_fire_levels(row.astype(float).tolist()) for row in arr])
 
         sums = activations.sum(axis=1, keepdims=True)
         share = np.divide(activations, sums, out=np.zeros_like(activations), where=sums > 0)
@@ -432,7 +426,6 @@ class _FuzzyCocoBase(BaseEstimator):
             stats = stats.sort_values("impact_pct", ascending=False)
 
         return (stats, activations) if return_matrix else stats
-
 
     # ---- helpers ----
     def _as_1d_sample(self, X):
@@ -471,7 +464,7 @@ class _FuzzyCocoBase(BaseEstimator):
 
     def _rules_index(self, n_rules):
         names = getattr(self, "rules_", None)
-        if isinstance(names, (list, tuple)) and len(names) == n_rules:
+        if isinstance(names, list | tuple) and len(names) == n_rules:
             return list(names)
         return [f"rule_{i}" for i in range(n_rules)]
 
@@ -527,7 +520,6 @@ class _FuzzyCocoBase(BaseEstimator):
             )
         return model
 
-
     def describe(self):
         """Return the full model description (variables, rules, defaults).
 
@@ -582,6 +574,7 @@ class FuzzyCocoClassifier(ClassifierMixin, FuzzyCocoPlotMixin, _FuzzyCocoBase):
             y_pred_idx = np.array([int(round(v[0])) for v in raw])
             y_pred_idx = np.clip(y_pred_idx, 0, len(self.classes_) - 1)
             return self.classes_[y_pred_idx]
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Regressor wrapper

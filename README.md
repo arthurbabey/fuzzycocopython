@@ -12,17 +12,33 @@ and exposes `FuzzyCocoClassifier` and `FuzzyCocoRegressor` with a familiar fit/p
 
 ## Installation
 
-Clone the repository, initialize the `fuzzycoco` submodule, and install the Python package in editable mode:
+This package is not yet on PyPI; install it from source. Make sure the following prerequisites are available:
+
+- A C++17 compiler toolchain (GCC/Clang on Linux & macOS, MSVC on Windows)
+- [CMake](https://cmake.org/) ≥ 3.21 and [Ninja](https://ninja-build.org/) on your PATH
+- [uv](https://docs.astral.sh/uv/) for dependency management (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+
+Clone the repository, initialise the `fuzzycoco` submodule, then build and install in editable mode with uv:
 
 ```bash
 git clone https://github.com/arthurbabey/fuzzycocopython.git
 cd fuzzycocopython
 git submodule update --init --recursive
-pip install -e .
+
+uv venv
+source .venv/bin/activate  # .\.venv\Scripts\activate on Windows
+
+uv pip install -e .
 ```
 
-The build requires a C++17 toolchain to compile the bundled bindings. Refer to the
-[`fuzzycoco` project](https://github.com/arthurbabey/fuzzycoco) for more background on the underlying engine.
+For development tasks (tests, linting, docs) install the optional toolchain:
+
+```bash
+uv pip install -e .[dev]
+```
+
+The build compiles the bundled C++ bindings. Refer to the
+[`fuzzycoco` project](https://github.com/arthurbabey/fuzzycoco) for background on the engine itself.
 
 ## Quick start
 
@@ -43,6 +59,20 @@ print(clf.rules_df_.head())
 ```
 
 For a guided tour, open `demo.ipynb`. Additional usage examples live in `tests/test_fuzzycocopython.py`.
+
+## Pre-commit hooks
+
+Install and activate the provided hooks (Black, Isort, Ruff, general hygiene) once per clone:
+
+```bash
+uv tool run pre-commit install
+```
+
+Run them against the full tree when needed:
+
+```bash
+uv tool run pre-commit run --all-files
+```
 
 
 ## License

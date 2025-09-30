@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from fuzzycocopython import FuzzyCocoClassifier, FuzzyCocoRegressor

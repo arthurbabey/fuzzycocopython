@@ -27,4 +27,3 @@ Train a regressor::
    print("R2:", reg.score(diabetes.data, diabetes.target))
 
 See ``demo.ipynb`` in the repository for a compact walkthrough.
-

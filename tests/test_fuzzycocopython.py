@@ -1,12 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from fuzzycocopython import (
-    FuzzyCocoClassifier,
-    FuzzyCocoRegressor,
-    load_model,
-    save_model,
-)
+from fuzzycocopython import FuzzyCocoClassifier, FuzzyCocoRegressor, load_model, save_model
 
 
 def test_classifier_with_pandas(tmp_path):
@@ -50,7 +45,7 @@ def test_classifier_with_numpy_with_names(tmp_path):
     )
     preds = model.predict(X)
     score = model.score(X, y)
-    #model.plot_aggregated_output(X[1])
+    # model.plot_aggregated_output(X[1])
 
     assert len(preds) == len(y)
     assert 0.0 <= score <= 1.0
