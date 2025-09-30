@@ -8,15 +8,17 @@ authors = [
     {name = "Arthur Babey", email = "arthur.babey@heig-vd.ch"}
 ]
 license = {text = "AGPL-3.0-or-later"}
-keywords = ["fuzzy", "coco", "fuzzy-logic", "sklearn", "bindings"]
+keywords = ["fuzzycoco", "fuzzy-logic", "sklearn", "bindings"]
 classifiers = [
-    "Development Status :: 3 :: Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: C++",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
@@ -48,7 +50,7 @@ requires = ["scikit-build-core", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.verbose = true
+build.verbose = true
 logging.level = "INFO"
 # Use a per-tag build dir to avoid reusing caches across different paths/ABIs
 build-dir = "build/{wheel_tag}"

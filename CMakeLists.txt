@@ -4,6 +4,12 @@ project(fuzzycocopython LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if(POLICY CMP0148)
+  cmake_policy(SET CMP0148 NEW)
+endif()
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 # --- turn off tests/bench/examples in the subproject (cover common flags) ---
@@ -19,7 +25,5 @@ if(NOT MSVC)
 endif()
 
 # bring in fuzzycoco
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fuzzycoco)
-
-find_package(pybind11 CONFIG REQUIRED)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/fuzzycoco EXCLUDE_FROM_ALL)
 add_subdirectory(bindings)

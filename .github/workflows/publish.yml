@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,12 +22,13 @@ jobs:
           submodules: recursive
 
       - name: Set up uv with Python
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install build dependencies
-        run: uv pip install --system build ninja cmake
+        run: uv pip install build ninja cmake
 
       - name: Build wheel
         run: |
@@ -49,12 +50,13 @@ jobs:
           submodules: recursive
 
       - name: Set up uv with Python
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.10'
+          activate-environment: true
 
       - name: Install build dependencies
-        run: uv pip install --system build
+        run: uv pip install build
 
       - name: Build sdist
         run: |
@@ -84,12 +86,14 @@ jobs:
         run: ls -R dist
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@v1.10.3
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
           user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          password: ${{ secrets.TEST_PYPI_API_TOKEN_FZP }}
           packages-dir: dist
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+          verbose: true
 
       # Uncomment the step below once you are ready to publish to the real PyPI registry.
       # - name: Publish to PyPI
