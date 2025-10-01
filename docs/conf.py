@@ -1,6 +1,8 @@
 import os
 import sys
+import warnings
 from datetime import datetime
+from types import ModuleType
 
 # -- Path setup --------------------------------------------------------------
 ROOT = os.path.abspath(os.path.join(__file__, "..", ".."))
@@ -14,14 +16,20 @@ copyright = f"{current_year}, {author}"
 
 # Try to read version from pyproject.toml without importing the package
 version = release = "0.0.0"
-try:
-    import tomllib  # Python 3.11+
+if sys.version_info >= (3, 11):
+    import tomllib as _tomllib
+else:  # pragma: no cover - Python < 3.11
+    _tomllib = None
 
-    with open(os.path.join(ROOT, "pyproject.toml"), "rb") as f:
-        data = tomllib.load(f)
-        version = release = data.get("project", {}).get("version", version)
-except Exception:
-    pass
+tomllib: ModuleType | None = _tomllib
+
+if tomllib is not None:
+    try:
+        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as f:
+            data = tomllib.load(f)
+            version = release = data.get("project", {}).get("version", version)
+    except OSError as exc:
+        warnings.warn(f"Unable to read project version: {exc}", RuntimeWarning, stacklevel=2)
 
 # -- General configuration ---------------------------------------------------
 extensions = [
