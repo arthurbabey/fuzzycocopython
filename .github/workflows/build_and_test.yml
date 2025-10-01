@@ -37,6 +37,14 @@ jobs:
       - name: Smoke test import (source build)
         run: uv run python -c "import fuzzycocopython; print(fuzzycocopython.__version__)"
 
+      - name: Install test dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: uv pip install pytest pytest-cov
+
+      - name: Run tests
+        if: matrix.os == 'ubuntu-latest'
+        run: uv run pytest -q
+
       - name: Clean previous wheels
         run: uv run python -c "import shutil; shutil.rmtree('dist', ignore_errors=True)"
 
