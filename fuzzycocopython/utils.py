@@ -79,7 +79,7 @@ def generate_generic_labels(n):
                 "Very High",
             ]
         case _:
-            return [f"Set {i+1}" for i in range(n)]
+            return [f"Set {i + 1}" for i in range(n)]
 
 
 def _auto_bits(n):
