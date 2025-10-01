@@ -118,7 +118,7 @@ def make_fuzzy_params(params=None, **flat_kwargs):
     g.influence_evolving_ratio = get("global_params", "influence_evolving_ratio", 0.8)
 
     # Input vars
-    in_sets = get("input_vars_params", "nb_sets", 3)
+    in_sets = get("input_vars_params", "nb_sets", 2)
     in_vars = VarsParams()
     in_vars.nb_sets = in_sets
     # exact C++-like logic for bits
@@ -134,7 +134,7 @@ def make_fuzzy_params(params=None, **flat_kwargs):
     in_vars.nb_bits_pos = get("input_vars_params", "nb_bits_pos", 8)
 
     # Output vars
-    out_sets = get("output_vars_params", "nb_sets", 3)
+    out_sets = get("output_vars_params", "nb_sets", 2)
     out_vars = VarsParams()
     out_vars.nb_sets = out_sets
     if get("output_vars_params", "nb_bits_vars", None) is not None:
@@ -149,18 +149,18 @@ def make_fuzzy_params(params=None, **flat_kwargs):
 
     # Evolution params
     rules = EvolutionParams()
-    rules.pop_size = get("rules_params", "pop_size", 50)
+    rules.pop_size = get("rules_params", "pop_size", 200)
     rules.elite_size = get("rules_params", "elite_size", 5)
-    rules.cx_prob = get("rules_params", "cx_prob", 0.5)
-    rules.mut_flip_genome = get("rules_params", "mut_flip_genome", 0.5)
-    rules.mut_flip_bit = get("rules_params", "mut_flip_bit", 0.025)
+    rules.cx_prob = get("rules_params", "cx_prob", 0.6)
+    rules.mut_flip_genome = get("rules_params", "mut_flip_genome", 0.4)
+    rules.mut_flip_bit = get("rules_params", "mut_flip_bit", 0.01)
 
     mfs = EvolutionParams()
-    mfs.pop_size = get("mfs_params", "pop_size", 50)
+    mfs.pop_size = get("mfs_params", "pop_size", 200)
     mfs.elite_size = get("mfs_params", "elite_size", 5)
-    mfs.cx_prob = get("mfs_params", "cx_prob", 0.5)
-    mfs.mut_flip_genome = get("mfs_params", "mut_flip_genome", 0.5)
-    mfs.mut_flip_bit = get("mfs_params", "mut_flip_bit", 0.025)
+    mfs.cx_prob = get("mfs_params", "cx_prob", 0.9)
+    mfs.mut_flip_genome = get("mfs_params", "mut_flip_genome", 0.2)
+    mfs.mut_flip_bit = get("mfs_params", "mut_flip_bit", 0.01)
 
     # Fitness
     fit = FitnessParams()
@@ -274,7 +274,7 @@ def to_linguistic_components(variables_dict, rules_dict, default_rules_dict):
 # ---- same helpers as before ----------------------------------------------
 
 
-def _build_pos_and_label_maps(variables_dict: dict) -> tuple[dict, dict]:
+def _build_pos_and_label_maps(variables_dict):
     pos_index = {"input": {}, "output": {}}
     label_map = {"input": {}, "output": {}}
     for io in ("input", "output"):
@@ -289,22 +289,22 @@ def _build_pos_and_label_maps(variables_dict: dict) -> tuple[dict, dict]:
     return pos_index, label_map
 
 
-def _format_var_lines_for_io(pos_index: dict, io: str, digits: int = 6) -> dict[str, list[str]]:
-    out: dict[str, list[str]] = {}
+def _format_var_lines_for_io(pos_index, io, digits=6):
+    out = {}
     for var, label_info in pos_index.get(io, {}).items():
         label_items = sorted(label_info.items(), key=lambda kv: kv[1]["position"])
         out[var] = [f"{lbl} = {info['position']:.{digits}g} (from {info['orig_set']})" for lbl, info in label_items]
     return out
 
 
-def _lookup_label_and_pos(pos_index: dict, label_map: dict, var: str, orig_set: str) -> tuple[str, float, str]:
+def _lookup_label_and_pos(pos_index, label_map, var, orig_set):
     io = "input" if var in pos_index["input"] else "output"
     lbl = label_map[io][var][orig_set]
     pos = pos_index[io][var][lbl]["position"]
     return lbl, pos, io
 
 
-def _rule_key(name: str) -> tuple[int, str]:
+def _rule_key(name):
     num = "".join(ch for ch in name if ch.isdigit())
     return (int(num) if num else 10**9, name)
 
@@ -312,22 +312,20 @@ def _rule_key(name: str) -> tuple[int, str]:
 # ---- VIEWS (human-readable text) -----------------------------------------
 
 
-def to_views_components(
-    variables_dict: dict, rules_dict: dict, default_rules_dict: dict, *, digits: int = 6
-) -> tuple[dict[str, list[str]], list[str], list[str]]:
+def to_views_components(variables_dict, rules_dict, default_rules_dict, *, digits=6):
     pos_index, label_map = _build_pos_and_label_maps(variables_dict)
 
     # flat variable map
     vars_in = _format_var_lines_for_io(pos_index, "input", digits)
     vars_out = _format_var_lines_for_io(pos_index, "output", digits)
-    variables_view: dict[str, list[str]] = dict(vars_in)
+    variables_view = dict(vars_in)
     for var, lines in vars_out.items():
         if var not in variables_view:
             variables_view[var] = lines
         else:
             variables_view[f"{var} (output)"] = lines  # collision guard
 
-    def ants_to_text(ant_dict: dict) -> str:
+    def ants_to_text(ant_dict):
         parts = []
         for var, mf_dict in ant_dict.items():
             orig_set = next(iter(mf_dict.keys()))
@@ -335,7 +333,7 @@ def to_views_components(
             parts.append(f"{var} is {lbl} ({pos:.{digits}g})")
         return " AND ".join(parts) if parts else "TRUE"
 
-    def cons_to_text(cons_dict: dict) -> str:
+    def cons_to_text(cons_dict):
         parts = []
         for var, mf_dict in cons_dict.items():
             orig_set = next(iter(mf_dict.keys()))
@@ -343,13 +341,13 @@ def to_views_components(
             parts.append(f"{var} is {lbl} ({pos:.{digits}g})")
         return " AND ".join(parts) if parts else "(no consequent)"
 
-    rules_view: list[str] = []
+    rules_view = []
     for rname, rdef in sorted(rules_dict.items(), key=lambda kv: _rule_key(kv[0])):
         ants = ants_to_text(rdef.get("antecedents", {}))
         cons = cons_to_text(rdef.get("consequents", {}))
         rules_view.append(f"{rname.upper()}: IF {ants} THEN {cons}")
 
-    default_rules_view: list[str] = []
+    default_rules_view = []
     for var, orig_set in default_rules_dict.items():
         lbl, pos, _ = _lookup_label_and_pos(pos_index, label_map, var, orig_set)
         default_rules_view.append(f"DEFAULT: {var} is {lbl} ({pos:.{digits}g})")
@@ -360,9 +358,7 @@ def to_views_components(
 # ---- TABLES (machine-friendly; great in notebooks) -----------------------
 
 
-def to_tables_components(
-    variables_dict: dict, rules_dict: dict, default_rules_dict: dict
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def to_tables_components(variables_dict, rules_dict, default_rules_dict):
     pos_index, label_map = _build_pos_and_label_maps(variables_dict)
 
     # variables_df
