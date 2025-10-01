@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from fuzzycocopython import FuzzyCocoClassifier, FuzzyCocoRegressor, load_model, save_model
 
@@ -168,3 +169,53 @@ def test_describe_contains_fuzzy_system():
     assert isinstance(description, dict)
     assert "fuzzy_system" in description
     assert description["fuzzy_system"]
+
+
+def test_fit_rejects_mismatched_feature_names():
+    X, y_class, _ = _generate_dataset(seed=7)
+    clf = FuzzyCocoClassifier(random_state=123)
+
+    with pytest.raises(ValueError, match="feature_names length"):
+        clf.fit(X, y_class, feature_names=["only_one_name"])
+
+
+def test_rules_activations_dataframe_missing_columns():
+    X, y_class, _ = _generate_dataset(seed=11)
+    columns = ["c1", "c2", "c3", "c4"]
+    clf = FuzzyCocoClassifier(random_state=0)
+    clf.fit(X, y_class, feature_names=columns)
+
+    sample = pd.DataFrame([X[0]], columns=["c1", "c2", "c3", "extra"])
+    with pytest.raises(ValueError, match="Missing features"):
+        clf.rules_activations(sample)
+
+
+def test_rules_stat_activations_empty_input_raises():
+    X, y_class, _ = _generate_dataset(seed=13)
+    clf = FuzzyCocoClassifier(random_state=1)
+    clf.fit(X, y_class)
+
+    empty = np.empty((0, clf.n_features_in_))
+    with pytest.raises(ValueError, match="Empty X"):
+        clf.rules_stat_activations(empty)
+
+
+def test_classifier_load_type_guard(tmp_path):
+    X, _, y_reg = _generate_dataset(seed=17)
+    reg = FuzzyCocoRegressor(random_state=2)
+    reg.fit(X, y_reg)
+
+    path = tmp_path / "reg.joblib"
+    reg.save(path)
+
+    with pytest.raises(TypeError, match="Expected instance of FuzzyCocoClassifier"):
+        FuzzyCocoClassifier.load(path)
+
+
+def test_regressor_custom_scoring():
+    X, _, y_reg = _generate_dataset(seed=19)
+    reg = FuzzyCocoRegressor(random_state=3)
+    reg.fit(X, y_reg)
+
+    score = reg.score(X, y_reg, scoring="neg_mean_squared_error")
+    assert isinstance(score, float)

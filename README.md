@@ -1,5 +1,7 @@
 # FuzzyCocoPython
 
+[![Build & Test](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml/badge.svg)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml)
+
 Python bindings and scikit-learn style estimators for [fuzzycoco](https://github.com/arthurbabey/fuzzycoco),
 an evolutionary fuzzy rule learning engine written in C++. This package wraps the C++ core as a Python module
 and exposes `FuzzyCocoClassifier` and `FuzzyCocoRegressor` with a familiar fit/predict API.
@@ -9,6 +11,7 @@ and exposes `FuzzyCocoClassifier` and `FuzzyCocoRegressor` with a familiar fit/p
 - Inspect learned linguistic variables, rules, and activation statistics from Python
 - Persist trained estimators with `save`/`load` helpers based on `joblib`
 - Ships with a demo notebook (`demo.ipynb`) showing the main API in action
+- Continuous integration runs builds and pytest via the [Build workflow](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml)
 
 ## Installation
 
@@ -16,7 +19,7 @@ This package is not yet on PyPI; install it from source. Make sure the following
 
 - A C++17 compiler toolchain (GCC/Clang on Linux & macOS, MSVC on Windows)
 - [CMake](https://cmake.org/) ≥ 3.21 and [Ninja](https://ninja-build.org/) on your PATH
-- [uv](https://docs.astral.sh/uv/) for dependency management (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- [uv](https://github.com/astral-sh/uv) is recommended for dependency management, but `pip` works just as well
 
 Clone the repository, initialise the `fuzzycoco` submodule, then build and install in editable mode with uv:
 
@@ -29,6 +32,16 @@ uv venv
 source .venv/bin/activate  # .\.venv\Scripts\activate on Windows
 
 uv pip install -e .
+
+```
+
+If you prefer the standard tooling, create a virtual environment manually and install with `pip`:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+
+pip install -e .
 ```
 
 For development tasks (tests, linting, docs) install the optional toolchain:
@@ -59,6 +72,10 @@ print(clf.rules_df_.head())
 ```
 
 For a guided tour, open `demo.ipynb`. Additional usage examples live in `tests/test_fuzzycocopython.py`.
+
+## Documentation
+
+Full API documentation is available at [arthurbabey.github.io/fuzzycocopython](https://arthurbabey.github.io/fuzzycocopython/).
 
 ## Pre-commit hooks
 
