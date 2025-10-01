@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parameters Guide &mdash; FuzzyCocoPython 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=7026087e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/index.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FuzzyCocoPython
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parameters Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#highlevel-structure">High‑level structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#globalparams">GlobalParams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#varsparams-input-output">VarsParams (input/output)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evolutionparams-rules-params-mfs-params">EvolutionParams (rules_params / mfs_params)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fitnessparams">FitnessParams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#automatic-defaults-applied-by-the-wrapper">Automatic defaults applied by the wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-configure-from-python">How to configure from Python</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#minimal-rely-on-defaults">1) Minimal: rely on defaults</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tuning-with-make-fuzzy-params">3) Tuning with <code class="docutils literal notranslate"><span class="pre">make_fuzzy_params</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-and-tips">Notes and tips</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FuzzyCocoPython</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Parameters Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/parameters.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="parameters-guide">
+<h1>Parameters Guide<a class="headerlink" href="#parameters-guide" title="Link to this heading"></a></h1>
+<p>This page describes the full set of parameters used by the FuzzyCoco engine and
+how to configure them from Python. The Python wrappers pass a
+<code class="docutils literal notranslate"><span class="pre">FuzzyCocoParams</span></code> object to the C++ core. You can:</p>
+<ul class="simple">
+<li><p>let the wrapper build sane defaults automatically (and override via
+scikit-learn style constructor kwargs like <code class="docutils literal notranslate"><span class="pre">nb_rules=10</span></code>), or</p></li>
+<li><p>use the convenience helper <code class="docutils literal notranslate"><span class="pre">make_fuzzy_params</span></code> with a nested dict to tune a subset.</p></li>
+</ul>
+<section id="highlevel-structure">
+<h2>High‑level structure<a class="headerlink" href="#highlevel-structure" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FuzzyCocoParams</span></code> is a container composed of sub-structures:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">global_params</span></code>: global search and rule topology limits.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">input_vars_params</span></code> and <code class="docutils literal notranslate"><span class="pre">output_vars_params</span></code>: encoding of variables and sets.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rules_params</span></code> and <code class="docutils literal notranslate"><span class="pre">mfs_params</span></code>: evolutionary algorithm knobs for the rule genome
+and the membership function positions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fitness_params</span></code>: scoring and feature weighting.</p></li>
+</ul>
+</section>
+<section id="globalparams">
+<h2>GlobalParams<a class="headerlink" href="#globalparams" title="Link to this heading"></a></h2>
+<p>Fields (defaults in parentheses):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_rules</span></code> (required in C++; default 5 in Python helper): number of rules
+to infer. Note: “DontCare” may effectively reduce the final rule count.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_max_var_per_rule</span></code> (auto): number of input variable slots in rule antecedents.
+The wrapper sets this to the number of features in <code class="docutils literal notranslate"><span class="pre">X</span></code> if not provided.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_generations</span></code> (100): maximum coevolution generations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_fitness</span></code> (1.0): early-stop fitness threshold; values &gt; 1 disable early stopping.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_cooperators</span></code> (2): number of cooperators during fitness evaluation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">influence_rules_initial_population</span></code> (False): bias initial population using feature weights.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">influence_evolving_ratio</span></code> (0.8): evolving ratio when the above is enabled.</p></li>
+</ul>
+</section>
+<section id="varsparams-input-output">
+<h2>VarsParams (input/output)<a class="headerlink" href="#varsparams-input-output" title="Link to this heading"></a></h2>
+<p>Controls the encoding of variables and their fuzzy sets. One instance is used for
+inputs and one for outputs.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_sets</span></code> (2 by default in Python helper): number of fuzzy sets per variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_bits_vars</span></code> (auto): bits to encode the variable index. For inputs, an extra
+bit is used to encode “DontCare”. Internally computed as
+<code class="docutils literal notranslate"><span class="pre">ceil(log2(nb_vars))</span> <span class="pre">+</span> <span class="pre">1</span></code> when missing.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_bits_sets</span></code> (auto): bits to encode the set index. Computed as <code class="docutils literal notranslate"><span class="pre">ceil(log2(nb_sets))</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_bits_pos</span></code> (8): bits to encode discretized positions of membership functions.</p></li>
+</ul>
+</section>
+<section id="evolutionparams-rules-params-mfs-params">
+<h2>EvolutionParams (rules_params / mfs_params)<a class="headerlink" href="#evolutionparams-rules-params-mfs-params" title="Link to this heading"></a></h2>
+<p>Evolutionary algorithm parameters for both the rules population and the membership
+function positions population. Same fields for both:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pop_size</span></code> (50): population size.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elite_size</span></code> (5): number of elites preserved between generations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cx_prob</span></code> (0.5): crossover probability.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mut_flip_genome</span></code> (0.5): probability a genome is chosen for mutation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mut_flip_bit</span></code> (0.025): probability a bit of the genome is flipped.</p></li>
+</ul>
+</section>
+<section id="fitnessparams">
+<h2>FitnessParams<a class="headerlink" href="#fitnessparams" title="Link to this heading"></a></h2>
+<p>Scoring configuration and feature-specific weights.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">output_vars_defuzz_thresholds</span></code>: list of thresholds used for defuzzification.
+The wrapper sets a single value (default 0.5). During <code class="docutils literal notranslate"><span class="pre">fit</span></code>, this is expanded
+to match the number of outputs via <code class="docutils literal notranslate"><span class="pre">fix_output_thresholds</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metrics_weights</span></code>: weights applied to system metrics when optimizing. Available
+fields include: <code class="docutils literal notranslate"><span class="pre">sensitivity</span></code>, <code class="docutils literal notranslate"><span class="pre">specificity</span></code>, <code class="docutils literal notranslate"><span class="pre">accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">ppv</span></code>, <code class="docutils literal notranslate"><span class="pre">rmse</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rrse</span></code>, <code class="docutils literal notranslate"><span class="pre">rae</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, and more (see <code class="docutils literal notranslate"><span class="pre">fuzzy_system_metrics.h</span></code>). The Python
+helper defaults are <code class="docutils literal notranslate"><span class="pre">sensitivity=1.0</span></code> and <code class="docutils literal notranslate"><span class="pre">specificity=0.8</span></code>; others default to 0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">features_weights</span></code>: optional mapping <code class="docutils literal notranslate"><span class="pre">{feature_name:</span> <span class="pre">weight}</span></code> with weights in [0, 1].
+Unknown names raise at runtime.</p></li>
+</ul>
+</section>
+<section id="automatic-defaults-applied-by-the-wrapper">
+<h2>Automatic defaults applied by the wrapper<a class="headerlink" href="#automatic-defaults-applied-by-the-wrapper" title="Link to this heading"></a></h2>
+<p>When you do not pass a <code class="docutils literal notranslate"><span class="pre">params</span></code> object:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_max_var_per_rule</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p></li>
+<li><p>Bit widths follow the C++ logic: <code class="docutils literal notranslate"><span class="pre">nb_bits_vars</span> <span class="pre">=</span> <span class="pre">ceil(log2(nb_vars))</span> <span class="pre">+</span> <span class="pre">1</span></code>
+and <code class="docutils literal notranslate"><span class="pre">nb_bits_sets</span> <span class="pre">=</span> <span class="pre">ceil(log2(nb_sets))</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_vars_defuzz_thresholds</span></code> are adapted to the number of outputs.</p></li>
+</ul>
+</section>
+<section id="how-to-configure-from-python">
+<h2>How to configure from Python<a class="headerlink" href="#how-to-configure-from-python" title="Link to this heading"></a></h2>
+<section id="minimal-rely-on-defaults">
+<h3>1) Minimal: rely on defaults<a class="headerlink" href="#minimal-rely-on-defaults" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fuzzycocopython</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuzzyCocoClassifier</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">FuzzyCocoClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Moderate: override some top-level kwargs</p></li>
+</ol>
+<p>You can also pass flat constructor kwargs in sklearn style:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># direct globals</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">FuzzyCocoClassifier</span><span class="p">(</span><span class="n">nb_rules</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">nb_max_var_per_rule</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># or nested via double underscore</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">FuzzyCocoClassifier</span><span class="p">(</span>
+    <span class="n">global_params__nb_rules</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">input_vars_params__nb_sets</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">rules_params__pop_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tuning-with-make-fuzzy-params">
+<h3>3) Tuning with <code class="docutils literal notranslate"><span class="pre">make_fuzzy_params</span></code><a class="headerlink" href="#tuning-with-make-fuzzy-params" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">make_fuzzy_params</span></code> accepts a nested dict (recommended) and some convenient
+flat keywords for common options.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fuzzycocopython.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_fuzzy_params</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="n">make_fuzzy_params</span><span class="p">({</span>
+    <span class="s2">&quot;global_params&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;nb_rules&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;nb_max_var_per_rule&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="s2">&quot;max_generations&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;input_vars_params&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;nb_sets&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s2">&quot;nb_bits_pos&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;output_vars_params&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;nb_sets&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;rules_params&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># evolutionary hyperparameters for rules</span>
+        <span class="s2">&quot;pop_size&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;elite_size&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;mfs_params&quot;</span><span class="p">:</span> <span class="p">{</span>    <span class="c1"># evolutionary hyperparameters for MF positions</span>
+        <span class="s2">&quot;pop_size&quot;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;fitness_params&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># single value replicated if multi-output</span>
+        <span class="s2">&quot;metrics_weights&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;sensitivity&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;specificity&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+        <span class="s2">&quot;features_weights&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+
+<span class="n">clf</span> <span class="o">=</span> <span class="n">FuzzyCocoClassifier</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="notes-and-tips">
+<h2>Notes and tips<a class="headerlink" href="#notes-and-tips" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Bit defaults are aligned with the engine: <code class="docutils literal notranslate"><span class="pre">nb_bits_sets</span> <span class="pre">=</span> <span class="pre">ceil(log2(nb_sets))</span></code>
+and <code class="docutils literal notranslate"><span class="pre">nb_bits_vars</span> <span class="pre">=</span> <span class="pre">ceil(log2(nb_vars))</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nb_bits_pos</span></code> controls discretization of MF positions. Smaller values constrain
+the search and can speed up runs at the cost of granularity.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metrics_weights</span></code> act as a linear scalarization over the internal metrics; set
+only the metrics you want to optimize explicitly.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">features_weights</span></code> to encourage or discourage specific input variables in
+the genome encoding and selection. Unknown feature names raise an error.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, FuzzyCocoPython contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

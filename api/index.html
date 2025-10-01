@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; FuzzyCocoPython 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=7026087e"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Parameters Guide" href="../parameters.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            FuzzyCocoPython
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parameters.html">Parameters Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#estimators">Estimators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoClassifier</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.fit"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoClassifier.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.predict"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoClassifier.predict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoRegressor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor.predict"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoRegressor.predict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#utilities">Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.save_model"><code class="docutils literal notranslate"><span class="pre">save_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_base.load_model"><code class="docutils literal notranslate"><span class="pre">load_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_aggregated_output"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin.plot_aggregated_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzification"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin.plot_fuzzification()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzy_sets"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin.plot_fuzzy_sets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_rule_activations"><code class="docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin.plot_rule_activations()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FuzzyCocoPython</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This API section focuses on the public Python wrappers. The internal
+compiled core is not documented here to avoid confusion.</p>
+</div>
+<section id="estimators">
+<h2>Estimators<a class="headerlink" href="#estimators" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fuzzycocopython.fuzzycoco_base.</span></span><span class="sig-name descname"><span class="pre">FuzzyCocoClassifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_overrides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">sk_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#FuzzyCocoClassifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.ClassifierMixin.html#sklearn.base.ClassifierMixin" title="(in scikit-learn v1.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassifierMixin</span></code></a>, <a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin" title="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_FuzzyCocoBase</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#FuzzyCocoClassifier.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the classifier on <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code>.</p>
+<p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">_FuzzyCocoBase.fit()</span></code> for details on accepted parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#FuzzyCocoClassifier.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoClassifier.predict" title="Link to this definition"></a></dt>
+<dd><p>Predict class labels for <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
+<p>Returns numpy array of labels matching the original label dtype.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fuzzycocopython.fuzzycoco_base.</span></span><span class="sig-name descname"><span class="pre">FuzzyCocoRegressor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_overrides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">sk_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#FuzzyCocoRegressor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.RegressorMixin.html#sklearn.base.RegressorMixin" title="(in scikit-learn v1.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RegressorMixin</span></code></a>, <a class="reference internal" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin" title="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FuzzyCocoPlotMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_FuzzyCocoBase</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#FuzzyCocoRegressor.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.FuzzyCocoRegressor.predict" title="Link to this definition"></a></dt>
+<dd><p>Predict continuous targets for <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
+<p>Returns a 1D array for single-output models or 2D for multi-output.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.save_model">
+<span class="sig-prename descclassname"><span class="pre">fuzzycocopython.fuzzycoco_base.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#save_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.save_model" title="Link to this definition"></a></dt>
+<dd><p>Save a fitted estimator to disk with joblib.</p>
+<p>Parameters
+- model: the fitted estimator instance (classifier or regressor)
+- filepath: target path (str or Path-like)
+- compress: joblib compression level or bool</p>
+<p>Returns the path string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_base.load_model">
+<span class="sig-prename descclassname"><span class="pre">fuzzycocopython.fuzzycoco_base.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_base.html#load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_base.load_model" title="Link to this definition"></a></dt>
+<dd><p>Load a previously saved estimator created with save_model.</p>
+</dd></dl>
+
+</section>
+<section id="plotting">
+<h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fuzzycocopython.fuzzycoco_plot_mixin.</span></span><span class="sig-name descname"><span class="pre">FuzzyCocoPlotMixin</span></span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_plot_mixin.html#FuzzyCocoPlotMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A mixin class providing plotting methods for FuzzyCoco estimators.</p>
+<p>Requires that the estimator using this mixin define:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">self.variables_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self.rules_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self.model_</span></code> (if using <code class="docutils literal notranslate"><span class="pre">plot_rule_activations</span></code> or <code class="docutils literal notranslate"><span class="pre">plot_aggregated_output</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self.default_rules_</span></code> (if referencing default rules, e.g. in <code class="docutils literal notranslate"><span class="pre">plot_aggregated_output</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self._predict</span></code> (if used in <code class="docutils literal notranslate"><span class="pre">plot_aggregated_output</span></code>)</p></li>
+</ul>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_aggregated_output">
+<span class="sig-name descname"><span class="pre">plot_aggregated_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12,</span> <span class="pre">10)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_plot_mixin.html#FuzzyCocoPlotMixin.plot_aggregated_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_aggregated_output" title="Link to this definition"></a></dt>
+<dd><p>Visualize the aggregated fuzzy output for an input sample.</p>
+<p>Uses a <code class="docutils literal notranslate"><span class="pre">SingletonFIS</span></code> to mirror the C++ singleton-based defuzzification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_sample</strong> – Single sample of crisp input values.</p></li>
+<li><p><strong>figsize</strong> – Matplotlib figure size.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzification">
+<span class="sig-name descname"><span class="pre">plot_fuzzification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_plot_mixin.html#FuzzyCocoPlotMixin.plot_fuzzification"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzification" title="Link to this definition"></a></dt>
+<dd><p>Plot membership functions and overlay fuzzification for a sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample</strong> – Array-like, dict, or pandas Series holding crisp inputs.</p></li>
+<li><p><strong>variable</strong> – None, str, or list[str]. If None, plot all input variables
+present in the sample; if str, only that variable; if list, each listed variable.</p></li>
+<li><p><strong>**kwargs</strong> – Extra options forwarded to the membership function viewer.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzy_sets">
+<span class="sig-name descname"><span class="pre">plot_fuzzy_sets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_plot_mixin.html#FuzzyCocoPlotMixin.plot_fuzzy_sets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_fuzzy_sets" title="Link to this definition"></a></dt>
+<dd><p>Plot membership functions for variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variable</strong> – None, str, or list[str]. If None, plot all variables; if str,
+plot only that variable; if list, plot each listed variable.</p></li>
+<li><p><strong>**kwargs</strong> – Extra options passed to the membership function viewer.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_rule_activations">
+<span class="sig-name descname"><span class="pre">plot_rule_activations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9,</span> <span class="pre">4)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tick_fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fuzzycocopython/fuzzycoco_plot_mixin.html#FuzzyCocoPlotMixin.plot_rule_activations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fuzzycocopython.fuzzycoco_plot_mixin.FuzzyCocoPlotMixin.plot_rule_activations" title="Link to this definition"></a></dt>
+<dd><p>Bar plot of rule activations for a single sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Single sample as array-like compatible with <code class="docutils literal notranslate"><span class="pre">rules_activations</span></code>.</p></li>
+<li><p><strong>figsize</strong> – Matplotlib figure size.</p></li>
+<li><p><strong>sort</strong> – Sort bars by activation descending.</p></li>
+<li><p><strong>top</strong> – Show only the first <code class="docutils literal notranslate"><span class="pre">top</span></code> rules after sorting.</p></li>
+<li><p><strong>annotate</strong> – Write activation values on top of bars.</p></li>
+<li><p><strong>tick_fontsize</strong> – Font size for x tick labels.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None. Displays a matplotlib figure.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../parameters.html" class="btn btn-neutral float-left" title="Parameters Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, FuzzyCocoPython contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
