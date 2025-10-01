@@ -1,6 +1,6 @@
 # FuzzyCocoPython
 
-[![Build & Test](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml/badge.svg)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml)
+[![Build](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build_and_test.yml)
 
 Python bindings and scikit-learn style estimators for [fuzzycoco](https://github.com/arthurbabey/fuzzycoco),
 an evolutionary fuzzy rule learning engine written in C++. This package wraps the C++ core as a Python module
@@ -11,7 +11,7 @@ and exposes `FuzzyCocoClassifier` and `FuzzyCocoRegressor` with a familiar fit/p
 - Inspect learned linguistic variables, rules, and activation statistics from Python
 - Persist trained estimators with `save`/`load` helpers based on `joblib`
 - Ships with a demo notebook (`demo.ipynb`) showing the main API in action
-- Continuous integration runs builds and pytest via the [Build workflow](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml)
+- Continuous integration runs builds via the [Build workflow](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build_and_test.yml) and tests via the [Tests workflow](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/tests.yml)
 
 ## Installation
 

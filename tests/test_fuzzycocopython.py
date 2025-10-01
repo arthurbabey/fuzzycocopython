@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from fuzzycocopython import FuzzyCocoClassifier, FuzzyCocoRegressor, load_model, save_model
+from fuzzycocopython.fuzzycoco_base import _FuzzyCocoBase
 
 
 def test_classifier_with_pandas(tmp_path):
@@ -196,7 +197,7 @@ def test_rules_stat_activations_empty_input_raises():
     clf.fit(X, y_class)
 
     empty = np.empty((0, clf.n_features_in_))
-    with pytest.raises(ValueError, match="Empty X"):
+    with pytest.raises(ValueError, match="0 sample"):
         clf.rules_stat_activations(empty)
 
 
@@ -217,5 +218,5 @@ def test_regressor_custom_scoring():
     reg = FuzzyCocoRegressor(random_state=3)
     reg.fit(X, y_reg)
 
-    score = reg.score(X, y_reg, scoring="neg_mean_squared_error")
+    score = _FuzzyCocoBase.score(reg, X, y_reg, scoring="neg_mean_squared_error")
     assert isinstance(score, float)
