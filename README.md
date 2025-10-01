@@ -1,6 +1,12 @@
 # FuzzyCocoPython
 
 [![Tests](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/tests.yml/badge.svg)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/tests.yml)
+[![Build](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml/badge.svg)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/build.yml)
+[![Coverage](https://img.shields.io/badge/coverage-pytest--cov-blue)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/badge/PyPI-pending-lightgrey)](https://pypi.org/project/fuzzycocopython/)
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-success)](https://www.gnu.org/licenses/agpl-3.0.html)
+[![Python Versions](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.13-blue)](#installation)
+
 [Documentation](https://arthurbabey.github.io/fuzzycocopython/)
 
 
@@ -47,7 +53,7 @@ pip install -e .
 For development tasks (tests, linting, docs) install the optional toolchain:
 
 ```bash
-uv pip install -e .[dev]
+uv pip install -e '.[dev]'
 ```
 
 The build compiles the bundled C++ bindings. Refer to the
@@ -76,19 +82,25 @@ For a guided tour, open `demo.ipynb`. Additional usage examples live in `tests/t
 ## Documentation
 
 Full API documentation is available at [arthurbabey.github.io/fuzzycocopython](https://arthurbabey.github.io/fuzzycocopython/).
+To build the docs locally run:
+
+```bash
+uv pip install -e '.[docs]'
+uv run sphinx-build -W -b html docs docs/_build/html
+```
 
 ## Pre-commit hooks
 
-Install and activate the provided hooks (Black, Isort, Ruff, general hygiene) once per clone:
+Install and activate the provided hooks (Ruff lint/format, mypy, general hygiene) once per clone:
 
 ```bash
-uv tool run pre-commit install
+uv run pre-commit install
 ```
 
 Run them against the full tree when needed:
 
 ```bash
-uv tool run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 

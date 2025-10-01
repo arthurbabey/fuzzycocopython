@@ -14,3 +14,12 @@ except Exception:  # pragma: no cover - fallback for editable/uninstalled state
 
 # expose both __version__ and version for convenience (mirrors sklearn style)
 version = __version__
+
+__all__ = [
+    "FuzzyCocoClassifier",
+    "FuzzyCocoRegressor",
+    "load_model",
+    "save_model",
+    "__version__",
+    "version",
+]

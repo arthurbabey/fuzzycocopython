@@ -8,8 +8,9 @@ from fuzzycocopython.fuzzycoco_base import _FuzzyCocoBase
 
 def test_classifier_with_pandas(tmp_path):
     # Generate a small classification dataset
-    X = pd.DataFrame(np.random.rand(20, 3), columns=["A", "B", "C"])
-    y = pd.Series(np.random.randint(0, 2, size=20), name="Target")
+    rng = np.random.default_rng(123)
+    X = pd.DataFrame(rng.random((20, 3)), columns=["A", "B", "C"])
+    y = pd.Series(rng.integers(0, 2, size=20), name="Target")
 
     model = FuzzyCocoClassifier(random_state=123)
     model.fit(X, y)
@@ -22,8 +23,9 @@ def test_classifier_with_pandas(tmp_path):
 
 def test_classifier_with_numpy_no_names(tmp_path):
     # Generate a small classification dataset
-    X = np.random.rand(20, 3)
-    y = np.random.randint(0, 2, size=20)
+    rng = np.random.default_rng(321)
+    X = rng.random((20, 3))
+    y = rng.integers(0, 2, size=20)
     model = FuzzyCocoClassifier(random_state=123)
     model.fit(X, y)
     preds = model.predict(X)
@@ -35,8 +37,9 @@ def test_classifier_with_numpy_no_names(tmp_path):
 
 def test_classifier_with_numpy_with_names(tmp_path):
     # Generate a small classification dataset
-    X = np.random.rand(20, 3)
-    y = np.random.randint(0, 2, size=20)
+    rng = np.random.default_rng(999)
+    X = rng.random((20, 3))
+    y = rng.integers(0, 2, size=20)
     feature_names = ["Feat1", "Feat2", "Feat3"]
     model = FuzzyCocoClassifier(random_state=123)
     model.fit(
@@ -55,8 +58,9 @@ def test_classifier_with_numpy_with_names(tmp_path):
 
 def test_regressor_with_pandas(tmp_path):
     # Generate a small regression dataset
-    X = pd.DataFrame(np.random.rand(20, 3), columns=["A", "B", "C"])
-    y = pd.Series(np.random.rand(20), name="Target")
+    rng = np.random.default_rng(456)
+    X = pd.DataFrame(rng.random((20, 3)), columns=["A", "B", "C"])
+    y = pd.Series(rng.random(20), name="Target")
     model = FuzzyCocoRegressor(random_state=123)
     model.fit(X, y)
     preds = model.predict(X)
@@ -67,8 +71,9 @@ def test_regressor_with_pandas(tmp_path):
 
 
 def test_regressor_with_numpy_no_names(tmp_path):
-    X = np.random.rand(20, 3)
-    y = np.random.rand(20)
+    rng = np.random.default_rng(654)
+    X = rng.random((20, 3))
+    y = rng.random(20)
     model = FuzzyCocoRegressor(random_state=123)
     model.fit(X, y)
     preds = model.predict(X)
@@ -79,8 +84,9 @@ def test_regressor_with_numpy_no_names(tmp_path):
 
 
 def test_regressor_with_numpy_with_names(tmp_path):
-    X = np.random.rand(20, 3)
-    y = np.random.rand(20)
+    rng = np.random.default_rng(777)
+    X = rng.random((20, 3))
+    y = rng.random(20)
     feature_names = ["Var1", "Var2", "Var3"]
     model = FuzzyCocoRegressor(random_state=123)
     model.fit(

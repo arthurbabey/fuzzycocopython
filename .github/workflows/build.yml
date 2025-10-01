@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  PYTHONWARNINGS: error
+
 jobs:
   build:
     name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
@@ -32,7 +35,7 @@ jobs:
         run: uv pip install build ninja cmake
 
       - name: Install from source
-        run: uv pip install --force-reinstall .
+        run: uv pip install -e .
 
       - name: Smoke test import (source build)
         run: uv run python -c "import fuzzycocopython; print(fuzzycocopython.__version__)"

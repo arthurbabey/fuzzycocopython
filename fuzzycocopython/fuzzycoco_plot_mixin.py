@@ -154,7 +154,8 @@ class FuzzyCocoPlotMixin:
 
         x_pos = np.arange(len(df))
         fig, ax = plt.subplots(figsize=figsize)
-        # bars = ax.bar(x_pos, df["activation"].to_numpy())
+        heights = df["activation"].to_numpy()
+        bars = ax.bar(x_pos, heights)
         ax.set_ylim(0, 1)
         ax.set_ylabel("Activation")
         ax.set_title("Rule activations (single sample)")
@@ -167,9 +168,15 @@ class FuzzyCocoPlotMixin:
         )
 
         if annotate:
-            vals = df["activation"].to_numpy()
-            for i, v in enumerate(vals):
-                ax.text(i, v, f"{v:.2f}", ha="center", va="bottom", fontsize=9)
+            for bar, value in zip(bars, heights, strict=False):
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    value,
+                    f"{value:.2f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=9,
+                )
 
         fig.tight_layout()
         plt.show()
