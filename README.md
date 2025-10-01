@@ -5,7 +5,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-pytest--cov-blue)](https://github.com/arthurbabey/fuzzycocopython/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/badge/PyPI-pending-lightgrey)](https://pypi.org/project/fuzzycocopython/)
 [![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-success)](https://www.gnu.org/licenses/agpl-3.0.html)
-[![Python Versions](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.12-blue)](#installation)
+[![Python Versions](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue)](#installation)
 
 [Documentation](https://arthurbabey.github.io/fuzzycocopython/)
 
