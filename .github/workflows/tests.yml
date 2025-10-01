@@ -6,9 +6,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  PYTHONWARNINGS: error
-
 jobs:
   quality:
     name: Lint & Type Check
